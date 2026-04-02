@@ -1,0 +1,106 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tracking",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "855af0f6-ea5d-4064-b7f1-da56674bb693",
+      "name": "Tracking Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        304
+      ],
+      "webhookId": "399f4a04-cdb8-4021-921d-47a1091890ac"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "name",
+          "value": "tracking_eventos"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "usuario_id": "={{ $json.body.usuario_id }}",
+            "evento": "={{ $json.body.evento }}",
+            "seccion": "={{ $json.body.seccion }}",
+            "metadatos": "={{ $json.body.metadatos || {} }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "d672aba3-2552-4285-8ee0-5f5a0f92a1d6",
+      "name": "Insert Tracking Event",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        464,
+        304
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "CvfAMQyiDbqrANJd",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE perfil_usuario SET score_interes = COALESCE(score_interes, '{}'::jsonb) || jsonb_build_object(  CASE     WHEN $1 LIKE '%Villa%' OR $1 LIKE '%Property%' THEN 'inmuebles'     WHEN $1 LIKE '%Insurance%' OR $1 LIKE '%Seguro%' THEN 'seguros'     WHEN $1 LIKE '%Hotel%' OR $1 LIKE '%Tour%' THEN 'turismo'     ELSE 'general'   END,   COALESCE((score_interes->>CASE     WHEN $1 LIKE '%Villa%' OR $1 LIKE '%Property%' THEN 'inmuebles'     WHEN $1 LIKE '%Insurance%' OR $1 LIKE '%Seguro%' THEN 'seguros'     WHEN $1 LIKE '%Hotel%' OR $1 LIKE '%Tour%' THEN 'turismo'     ELSE 'general'   END)::int, 0) + 1 ), ultima_actividad = NOW() WHERE usuario_id = $2",
+        "options": {
+          "queryReplacement": "={{ $json.seccion }},{{ $(\"Tracking Webhook\").item.json.body.usuario_id }}"
+        }
+      },
+      "id": "a03b423a-7707-4571-b97a-e43716047307",
+      "name": "Update User Profile Score",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        688,
+        304
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "CvfAMQyiDbqrANJd",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Tracking Webhook": {
+      "main": [
+        [
+          {
+            "node": "Insert Tracking Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Tracking Event": {
+      "main": [
+        [
+          {
+            "node": "Update User Profile Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

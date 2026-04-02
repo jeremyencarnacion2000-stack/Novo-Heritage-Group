@@ -1,0 +1,105 @@
+{
+    "name": "api_perfil",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "GET",
+                "path": "perfil",
+                "responseMode": "lastNode",
+                "options": {}
+            },
+            "id": "webhook-api",
+            "name": "Webhook API",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                400,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "string": [
+                        {
+                            "value1": "={{ $node[\"Webhook API\"].getSelection()?.headers?.['x-api-key'] }}",
+                            "operation": "equal",
+                            "value2": "GODMODE_SECRET_KEY"
+                        }
+                    ]
+                }
+            },
+            "id": "security-check",
+            "name": "Security Check",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                600,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "=SELECT u.nombre, p.score_interes, p.intereses, p.recomendaciones, p.ultima_actividad \nFROM usuarios u\nJOIN perfil_usuario p ON u.usuario_id = p.usuario_id\nWHERE u.usuario_id = '{{ $node[\"Webhook API\"].json.query.usuario_id }}' \nOR u.email = '{{ $node[\"Webhook API\"].json.query.email }}';"
+            },
+            "id": "db-get-profile",
+            "name": "Get Profile",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 1,
+            "position": [
+                850,
+                200
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "Postgres account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsCode": "return { \n  error: 'Acceso denegado o Error de autenticación',\n  code: 401\n};"
+            },
+            "id": "auth-error",
+            "name": "Auth Error",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                850,
+                400
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook API": {
+            "main": [
+                [
+                    {
+                        "node": "Security Check",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Security Check": {
+            "main": [
+                [
+                    {
+                        "node": "Get Profile",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Auth Error",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

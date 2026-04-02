@@ -1,0 +1,168 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "path": "get-profile",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "1b19ff71-a60e-4067-8c78-9fbfd59ceff4",
+      "name": "Profile API Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        1488
+      ],
+      "webhookId": "558c4cdb-7043-4a79-9181-41a834d1a8da"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT p.usuario_id, p.tipo_usuario, p.intereses, p.score_interes, p.ultima_actividad, u.email, u.nombre FROM perfil_usuario p JOIN usuarios u ON p.usuario_id = u.id::text WHERE u.email = $1 LIMIT 1",
+        "options": {
+          "queryReplacement": "={{ $json.query.email }}"
+        }
+      },
+      "id": "8d14d54e-faae-4edb-ba3b-6c4e355bb82c",
+      "name": "Get User Profile",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        464,
+        1488
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "CvfAMQyiDbqrANJd",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.usuario_id }}",
+              "operator": {
+                "type": "string",
+                "operation": "exists"
+              },
+              "rightValue": ""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3a7ae890-b3ad-475d-983a-4b29e8bf68d4",
+      "name": "Check Profile Exists",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        688,
+        1488
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "success",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "2",
+              "name": "profile",
+              "value": "={{ $json }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b0b98289-0bc6-4cf8-bba8-493db88f9b36",
+      "name": "Format Profile Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        912,
+        1392
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "success",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "2",
+              "name": "error",
+              "value": "Profile not found",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b90ad077-aab2-46f9-bc7a-7f1aa8a9519b",
+      "name": "Format Error Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        912,
+        1584
+      ]
+    }
+  ],
+  "connections": {
+    "Profile API Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get User Profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get User Profile": {
+      "main": [
+        [
+          {
+            "node": "Check Profile Exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Profile Exists": {
+      "main": [
+        [
+          {
+            "node": "Format Profile Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Error Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

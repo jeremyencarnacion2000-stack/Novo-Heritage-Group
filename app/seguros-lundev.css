@@ -1,0 +1,574 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.cdnfonts.com/css/devil-breeze');
+@import url('https://fonts.cdnfonts.com/css/poppins');
+@import url('https://fonts.cdnfonts.com/css/bimbo');
+
+/* Premium Dark Theme Variables */
+:root {
+    --bg-primary: #0a0a0a;
+    --bg-secondary: #111111;
+    --bg-tertiary: #1a1a1a;
+    --text-primary: #ffffff;
+    --text-secondary: #e5e5e5;
+    --text-muted: #a3a3a3;
+    --accent-gold: #d4af37;
+    --accent-gold-light: #f4e87c;
+    --accent-gold-dark: #b8860b;
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --shadow-soft: rgba(0, 0, 0, 0.3);
+    --shadow-glow: rgba(212, 175, 55, 0.1);
+}
+
+@keyframes glow-premium {
+
+    0%,
+    100% {
+        box-shadow: 0 0 10px var(--shadow-glow), 0 0 20px var(--shadow-glow);
+    }
+
+    50% {
+        box-shadow: 0 0 20px var(--shadow-glow), 0 0 40px var(--shadow-glow), 0 0 60px var(--shadow-glow);
+    }
+}
+
+@keyframes fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slide-in-left {
+    from {
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.animate-glow {
+    animation: glow-premium 3s ease-in-out infinite;
+}
+
+.animate-fade-in-up {
+    animation: fade-in-up 0.6s ease-out forwards;
+}
+
+.animate-slide-in-left {
+    animation: slide-in-left 0.6s ease-out forwards;
+}
+
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+    background-attachment: fixed;
+    color: var(--text-primary);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+*::-webkit-scrollbar {
+    width: 0;
+}
+
+* {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    box-sizing: border-box;
+}
+
+.section {
+    width: 100%;
+    min-height: 100vh;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.content-fit {
+    width: min(1200px, 90vw);
+    margin: auto;
+    min-height: 100vh;
+    position: relative;
+    padding-block: 10em;
+}
+
+header {
+    padding-block: 1em;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 100;
+    backdrop-filter: blur(24px) saturate(180%);
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 20px var(--shadow-soft);
+}
+
+header .content-fit {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: unset !important;
+    padding-block: unset !important;
+}
+
+header .content-fit nav ul {
+    display: flex;
+    gap: 2em;
+}
+
+/* Premium Typography */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+    color: var(--text-primary);
+    text-shadow: 0 2px 4px var(--shadow-soft);
+}
+
+p {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    letter-spacing: 0.01em;
+}
+
+/* Glassmorphism Effects */
+.glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px var(--shadow-soft);
+}
+
+.glass-button {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: var(--text-primary);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-button:hover {
+    background: var(--accent-gold);
+    color: var(--bg-primary);
+    box-shadow: 0 0 20px var(--shadow-glow);
+    transform: translateY(-2px);
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .section {
+        padding: 4rem 1rem;
+    }
+
+    h1 {
+        font-size: 2.5rem !important;
+    }
+
+    h2 {
+        font-size: 2rem !important;
+    }
+}
+
+#hero .title {
+    background: linear-gradient(135deg, var(--accent-gold-light) 0%, var(--accent-gold) 50%, var(--accent-gold-dark) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 11em;
+    font-family: "devil breeze";
+    font-weight: bold;
+    position: relative;
+    text-align: center;
+    text-shadow: 0 0 40px var(--shadow-glow);
+    filter: drop-shadow(0 4px 8px var(--shadow-soft));
+}
+
+#hero .title::before {
+    content: attr(data-shadow);
+    position: absolute;
+    top: 0.5em;
+    inset: 0.66em 0 0 0;
+    z-index: -1;
+    color: rgba(68, 80, 34, 0.3);
+    filter: blur(2px);
+}
+
+.section .decorate {
+    position: absolute;
+}
+
+.section .content-fit .des {
+    display: flex;
+    gap: 30%;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.section .number {
+    font-family: "devil breeze";
+    font-size: 15em;
+    font-weight: bold;
+    background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-light) 50%, var(--accent-gold-dark) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 30px var(--shadow-glow);
+    filter: drop-shadow(0 2px 4px var(--shadow-soft));
+}
+
+.section .content-fit .title {
+    font-family: "devil breeze";
+    font-size: 5em;
+    font-weight: bold;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.feature-list {
+    margin-top: 2em;
+    list-style: none;
+    padding: 0;
+}
+
+.feature-list li {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 3px solid var(--accent-gold);
+    padding: 1.5em;
+    margin-bottom: 1em;
+    border-radius: 12px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px var(--shadow-soft);
+    position: relative;
+    overflow: hidden;
+}
+
+.feature-list li::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, var(--accent-gold) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.feature-list li:hover {
+    transform: translateX(8px) translateY(-2px);
+    border-left-width: 4px;
+    box-shadow: 0 8px 25px var(--shadow-soft), 0 0 20px var(--shadow-glow);
+}
+
+.feature-list li:hover::before {
+    opacity: 0.05;
+}
+
+#contact .content-fit {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+}
+
+#contact table {
+    width: min(800px, 90vw);
+    padding-top: 2em;
+    font-size: 2em;
+    margin: auto;
+}
+
+#contact table td {
+    padding-block: 1em;
+    border-bottom: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+}
+
+#contact table td:nth-child(1) {
+    text-align: left;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+#contact table td:nth-child(2) {
+    text-align: right;
+    font-weight: 300;
+    color: var(--accent-gold);
+}
+
+#contact table tr:hover td {
+    color: var(--text-primary);
+    transform: translateX(5px);
+}
+
+#contact .sign {
+    font-family: 'Bimbo', sans-serif;
+    font-size: 10em;
+    background: linear-gradient(135deg, var(--accent-gold-light) 0%, var(--accent-gold) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 20px var(--shadow-glow);
+    filter: drop-shadow(0 2px 4px var(--shadow-soft));
+}
+
+#container3D {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    pointer-events: none;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 1023px) {
+    #hero .title {
+        font-size: 5em;
+    }
+
+    .section .content-fit .des {
+        flex-direction: column;
+    }
+
+    /* Optimizar animaciones para tablets */
+    .animate-glow {
+        animation-duration: 4s;
+    }
+
+    /* Mejorar efectos glass en tablets */
+    .glass-card,
+    .glass-button {
+        backdrop-filter: blur(15px);
+    }
+
+    /* Reducir complejidad de scroll en tablets */
+    html {
+        scroll-behavior: auto;
+    }
+}
+
+@media screen and (max-width: 767px) {
+    #hero .title {
+        font-size: 3em;
+    }
+
+    .section .content-fit .des {
+        flex-direction: column;
+    }
+
+    .section .number {
+        font-size: 5em;
+    }
+
+    .section .content-fit .title {
+        font-size: 2em;
+    }
+
+    #contact table {
+        font-size: 1em;
+    }
+
+    #contact .sign {
+        font-size: 2em;
+    }
+
+    /* Optimizaciones móviles críticas */
+    .animate-glow {
+        animation: none;
+        /* Desactivar animaciones complejas en móviles */
+    }
+
+    /* Mejorar glassmorphism en móviles */
+    .glass-card,
+    .glass-button {
+        backdrop-filter: blur(8px);
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Scroll optimizado para móviles */
+    html {
+        scroll-behavior: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Reducir movimiento parallax en móviles */
+    .parallax-bg {
+        transform: none !important;
+        background-attachment: scroll !important;
+    }
+
+    /* Optimizar secciones sticky para móviles */
+    .sticky {
+        position: relative !important;
+    }
+
+    /* Reducir complejidad de backdrop-filter en móviles */
+    .backdrop-blur-xl {
+        backdrop-filter: blur(8px);
+    }
+
+    /* Optimizaciones de rendimiento para móviles */
+    * {
+        will-change: auto;
+    }
+
+    /* Reducir animaciones de hover en móviles */
+    @media (hover: none) {
+        .group:hover .group-hover\:scale-110 {
+            transform: none !important;
+        }
+
+        .group:hover .group-hover\:rotate-3 {
+            transform: none !important;
+        }
+
+        .group:hover .group-hover\:translate-x-1 {
+            transform: none !important;
+        }
+
+        .feature-list li:hover {
+            transform: none !important;
+        }
+
+        .glass-button:hover {
+            transform: none !important;
+        }
+    }
+}
+
+/* Media queries adicionales para optimización móvil */
+@media screen and (max-width: 480px) {
+
+    /* Ajustes para móviles pequeños */
+    .section {
+        padding: 2rem 1rem;
+        min-height: auto;
+    }
+
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    /* Optimizar botones para touch */
+    button,
+    .glass-button {
+        min-height: 48px;
+        min-width: 48px;
+        padding: 12px 24px;
+    }
+
+    /* Reducir efectos visuales pesados */
+    .bg-gradient-to-br {
+        background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+    }
+
+    /* Simplificar animaciones de texto */
+    .text-4xl {
+        font-size: 1.875rem !important;
+    }
+
+    .text-3xl {
+        font-size: 1.5rem !important;
+    }
+
+    .text-5xl {
+        font-size: 2rem !important;
+    }
+
+    .text-6xl {
+        font-size: 2.25rem !important;
+    }
+
+    .text-7xl {
+        font-size: 2.5rem !important;
+    }
+
+    /* Optimizar glassmorphism para móviles pequeños */
+    .glass-card {
+        backdrop-filter: blur(5px);
+        background: rgba(255, 255, 255, 0.01);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* Mejorar legibilidad en móviles pequeños */
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        letter-spacing: -0.015em;
+    }
+
+    p {
+        line-height: 1.6;
+    }
+}
+
+/* Optimizaciones para pantallas de baja resolución */
+@media screen and (max-width: 360px) {
+
+    .text-4xl,
+    .text-3xl,
+    .text-5xl,
+    .text-6xl,
+    .text-7xl {
+        font-size: 1.5rem !important;
+        line-height: 1.3 !important;
+    }
+
+    .px-4 {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    .py-24 {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+}
+
+/* Performance optimizations */
+* {
+    will-change: auto;
+}
+
+html {
+    scroll-behavior: smooth;
+}

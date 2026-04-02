@@ -1,0 +1,49 @@
+import { Logo } from "@/components/logo"
+import { motion, AnimatePresence } from "framer-motion"
+import Link from "next/link"
+
+interface MobileHeaderProps {
+  isMobileMenuOpen: boolean
+  setIsMobileMenuOpen: (open: boolean) => void
+  handleMobileNavClick: (elementId: string) => void
+  isIntroFinished?: boolean
+}
+
+export function MobileHeader({
+  isMobileMenuOpen,
+  setIsMobileMenuOpen,
+  handleMobileNavClick,
+  isIntroFinished = true
+}: MobileHeaderProps) {
+  return (
+    <header className={`sticky top-4 z-[9999] mx-4 flex w-auto flex-row items-center justify-between rounded-none bg-background/60 backdrop-blur-xl border border-primary/20 shadow-premium md:hidden px-5 py-3.5 transition-all duration-1000 ${!isIntroFinished ? "opacity-10 pointer-events-none blur-sm" : "opacity-100 blur-0"}`}>
+      <Link
+        className="flex items-center justify-center gap-2 active:scale-95 transition-transform"
+        href="/"
+      >
+        <Logo className="h-8 w-28" />
+      </Link>
+
+      <button
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        className="flex items-center justify-center w-11 h-11 rounded-none bg-white/5 border border-white/10 transition-all active:scale-90"
+        aria-label="Toggle menu"
+      >
+        <div className="flex flex-col items-center justify-center w-6 h-6 space-y-1.5 p-1">
+          <motion.span
+            animate={isMobileMenuOpen ? { rotate: 45, y: 8 } : { rotate: 0, y: 0 }}
+            className={`block w-5 h-0.5 ${isMobileMenuOpen ? "bg-foreground" : "bg-foreground"} rounded-none transition-colors`}
+          ></motion.span>
+          <motion.span
+            animate={isMobileMenuOpen ? { opacity: 0, x: -10 } : { opacity: 1, x: 0 }}
+            className="block w-5 h-0.5 bg-foreground rounded-none transition-colors"
+          ></motion.span>
+          <motion.span
+            animate={isMobileMenuOpen ? { rotate: -45, y: -8 } : { rotate: 0, y: 0 }}
+            className={`block w-5 h-0.5 ${isMobileMenuOpen ? "bg-foreground" : "bg-foreground"} rounded-none transition-colors`}
+          ></motion.span>
+        </div>
+      </button>
+    </header>
+  )
+}

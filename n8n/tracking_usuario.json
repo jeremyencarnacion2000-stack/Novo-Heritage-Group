@@ -1,0 +1,163 @@
+{
+    "name": "tracking_usuario",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "tracking",
+                "options": {}
+            },
+            "id": "webhook-trigger",
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                450,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const body = $json.body;\nif (!body.usuario_id || !body.evento || !body.seccion) {\n  throw new Error('Faltan campos obligatorios: usuario_id, evento, seccion');\n}\nreturn { \n  usuario_id: String(body.usuario_id), \n  evento: String(body.evento), \n  seccion: String(body.seccion),\n  tiempo: parseInt(body.tiempo_en_segundos || 0),\n  metadata: body.metadata || {}\n};"
+            },
+            "id": "validation-node",
+            "name": "Validación",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                650,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "insert",
+                "schema": "public",
+                "table": "tracking_eventos",
+                "columns": "usuario_id, evento, seccion, tiempo_en_segundos, metadata",
+                "values": "={{$json.usuario_id}}, {{$json.evento}}, {{$json.seccion}}, {{$json.tiempo}}, {{JSON.stringify($json.metadata)}}"
+            },
+            "id": "db-insert-tracking",
+            "name": "Insert Tracking",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 1,
+            "position": [
+                850,
+                200
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "Postgres account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "update",
+                "schema": "public",
+                "table": "perfil_usuario",
+                "columns": "ultima_actividad",
+                "where": "usuario_id = {{$json.usuario_id}}",
+                "values": "NOW()"
+            },
+            "id": "db-update-activity",
+            "name": "Update Actividad",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 1,
+            "position": [
+                850,
+                400
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "Postgres account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsCode": "const seccion = $json.seccion.toLowerCase();\nlet score_update = { inversionista: 0, cliente: 0, viajero: 0 };\n\nif (seccion.includes('propiedad') || seccion.includes('real_estate')) score_update.inversionista = 1;\nif (seccion.includes('seguro') || seccion.includes('poliza')) score_update.cliente = 1;\nif (seccion.includes('turismo') || seccion.includes('hotel') || seccion.includes('viaje')) score_update.viajero = 1;\n\nreturn { ...$json, score_update };"
+            },
+            "id": "classification-node",
+            "name": "Clasificación",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1050,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "=INSERT INTO perfil_usuario (usuario_id, score_interes, ultima_actividad) \nVALUES ('{{$json.usuario_id}}', '{\"inversionista\": {{$json.score_update.inversionista}}, \"cliente\": {{$json.score_update.cliente}}, \"viajero\": {{$json.score_update.viajero}}}', NOW())\nON CONFLICT (usuario_id) DO UPDATE \nSET score_interes = jsonb_set(perfil_usuario.score_interes, '{inversionista}', (COALESCE((perfil_usuario.score_interes->>'inversionista')::int, 0) + {{$json.score_update.inversionista}})::text::jsonb),\n    score_interes = jsonb_set(perfil_usuario.score_interes, '{cliente}', (COALESCE((perfil_usuario.score_interes->>'cliente')::int, 0) + {{$json.score_update.cliente}})::text::jsonb),\n    score_interes = jsonb_set(perfil_usuario.score_interes, '{viajero}', (COALESCE((perfil_usuario.score_interes->>'viajero')::int, 0) + {{$json.score_update.viajero}})::text::jsonb),\n    ultima_actividad = NOW();"
+            },
+            "id": "db-upsert-profile",
+            "name": "Upsert Perfil",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 1,
+            "position": [
+                1250,
+                300
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "Postgres account"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Validación",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Validación": {
+            "main": [
+                [
+                    {
+                        "node": "Insert Tracking",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Update Actividad",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Insert Tracking": {
+            "main": [
+                [
+                    {
+                        "node": "Clasificación",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Clasificación": {
+            "main": [
+                [
+                    {
+                        "node": "Upsert Perfil",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

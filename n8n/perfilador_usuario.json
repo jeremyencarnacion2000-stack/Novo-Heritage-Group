@@ -1,0 +1,118 @@
+{
+    "name": "perfilador_usuario",
+    "nodes": [
+        {
+            "parameters": {
+                "event": "interval",
+                "interval": 1,
+                "unit": "hours"
+            },
+            "id": "trigger-interval",
+            "name": "Interval",
+            "type": "n8n-nodes-base.interval",
+            "typeVersion": 1,
+            "position": [
+                400,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "SELECT u.usuario_id, u.email, p.score_interes, p.intereses, \n(SELECT json_agg(t) FROM (SELECT evento, seccion, tiempo_en_segundos FROM tracking_eventos WHERE usuario_id = u.usuario_id ORDER BY creado_en DESC LIMIT 10) t) as RecentTracking\nFROM usuarios u\nJOIN perfil_usuario p ON u.usuario_id = p.usuario_id\nWHERE p.ultima_actividad > NOW() - INTERVAL '24 hours';"
+            },
+            "id": "db-get-active-users",
+            "name": "Get Active Users",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 1,
+            "position": [
+                600,
+                300
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "Postgres account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "model": "gpt-4o",
+                "options": {
+                    "temperature": 0.7
+                }
+            },
+            "id": "openai-analysis",
+            "name": "AI Profiling",
+            "type": "n8n-nodes-base.openAi",
+            "typeVersion": 1,
+            "position": [
+                850,
+                300
+            ],
+            "credentials": {
+                "openAiApi": {
+                    "id": "OpenAI account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "update",
+                "schema": "public",
+                "table": "perfil_usuario",
+                "columns": "intereses, recomendaciones",
+                "where": "usuario_id = {{$node[\"Get Active Users\"].json[\"usuario_id\"]}}",
+                "values": "={{$json.intereses}}, {{$json.recomendaciones}}"
+            },
+            "id": "db-update-profile-ai",
+            "name": "Update Profile AI",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 1,
+            "position": [
+                1100,
+                300
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "Postgres account"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Interval": {
+            "main": [
+                [
+                    {
+                        "node": "Get Active Users",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Active Users": {
+            "main": [
+                [
+                    {
+                        "node": "AI Profiling",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "AI Profiling": {
+            "main": [
+                [
+                    {
+                        "node": "Update Profile AI",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

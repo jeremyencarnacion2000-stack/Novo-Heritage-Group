@@ -1,0 +1,164 @@
+{
+    "name": "email_inactividad",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "days",
+                            "interval": 1
+                        }
+                    ]
+                }
+            },
+            "id": "trigger-schedule",
+            "name": "Schedule Trigger",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.1,
+            "position": [
+                400,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "SELECT u.usuario_id, u.nombre, u.email, p.intereses, p.recomendaciones \nFROM usuarios u\nJOIN perfil_usuario p ON u.usuario_id = p.usuario_id\nWHERE p.ultima_actividad < NOW() - INTERVAL '3 days'\nAND NOT EXISTS (\n    SELECT 1 FROM email_logs el \n    WHERE el.usuario_id = u.usuario_id \n    AND el.creado_en > NOW() - INTERVAL '7 days'\n);"
+            },
+            "id": "db-get-inactive",
+            "name": "Get Inactive Users",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 1,
+            "position": [
+                600,
+                300
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "Postgres account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "model": "gpt-4o-mini",
+                "messages": {
+                    "message": [
+                        {
+                            "role": "system",
+                            "content": "Eres un asistente de marketing experto. Genera un asunto y un cuerpo de email persuasivo en formato JSON {\"subject\": \"...\", \"body\": \"...\"} para un usuario que no ha visitado nuestra plataforma en 3 días. Usa sus intereses y recomendaciones para personalizarlo."
+                        },
+                        {
+                            "content": "=Hola {{ $json.nombre }}, vimos que te interesan temas como {{ JSON.stringify($json.intereses) }}. Nuestras recomendaciones para ti: {{ JSON.stringify($json.recomendaciones) }}. Escribe un mensaje cálido invitándolo a regresar."
+                        }
+                    ]
+                },
+                "jsonOutput": true
+            },
+            "id": "openai-gen-email",
+            "name": "AI Gen Email",
+            "type": "n8n-nodes-base.openAi",
+            "typeVersion": 1.1,
+            "position": [
+                850,
+                300
+            ],
+            "credentials": {
+                "openAiApi": {
+                    "id": "OpenAI account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "sendTo": "={{ $node[\"Get Inactive Users\"].json.email }}",
+                "subject": "={{ $json.choices[0].message.content.subject }}",
+                "emailType": "html",
+                "html": "={{ $json.choices[0].message.content.body }}",
+                "options": {}
+            },
+            "id": "gmail-send",
+            "name": "Gmail Send",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 2,
+            "position": [
+                1100,
+                300
+            ],
+            "credentials": {
+                "gmailApi": {
+                    "id": "Gmail account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "insert",
+                "schema": "public",
+                "table": "email_logs",
+                "columns": "usuario_id, tipo_email, estado, metadata",
+                "values": "={{ $node[\"Get Inactive Users\"].json.usuario_id }}, 'RE-ENGAGEMENT', 'SENT', {{ JSON.stringify($json) }}"
+            },
+            "id": "db-log-email",
+            "name": "Log Email",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 1,
+            "position": [
+                1300,
+                300
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "Postgres account"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Schedule Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Get Inactive Users",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Inactive Users": {
+            "main": [
+                [
+                    {
+                        "node": "AI Gen Email",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "AI Gen Email": {
+            "main": [
+                [
+                    {
+                        "node": "Gmail Send",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gmail Send": {
+            "main": [
+                [
+                    {
+                        "node": "Log Email",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

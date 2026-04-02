@@ -1,0 +1,531 @@
+/* Divine Effects CSS - Premium Design */
+
+/* Root variables for consistent theming */
+:root {
+  --gold-light: #f5d042;
+  --gold-medium: #e6b800;
+  --gold-dark: #b8860b;
+  --platinum-light: #e5e4e2;
+  --platinum-medium: #d1d0ce;
+  --platinum-dark: #a9a9a9;
+  --onyx: #353839;
+  --onyx-dark: #0f0f0f;
+  --transition-ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --transition-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --transition-slow: cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+/* Smooth scrolling for the entire page */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+}
+
+/* Custom scrollbar with divine aesthetics */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 15, 15, 0.1);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--gold-light), var(--gold-medium), var(--gold-dark));
+  border-radius: 10px;
+  border: 2px solid rgba(15, 15, 15, 0.2);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--gold-medium), var(--gold-dark), #8b6f00);
+}
+
+/* Divine gradient backgrounds */
+.divine-gradient {
+  background: linear-gradient(135deg, 
+    rgba(245, 208, 66, 0.1) 0%, 
+    rgba(230, 184, 0, 0.15) 25%, 
+    rgba(184, 134, 11, 0.2) 50%, 
+    rgba(230, 184, 0, 0.15) 75%, 
+    rgba(245, 208, 66, 0.1) 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Divine section base styles */
+.divine-section {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 6rem 1rem;
+}
+
+.divine-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  z-index: -1;
+}
+
+.divine-section::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.6) 100%);
+  z-index: -1;
+}
+
+/* Divine content containers with glass morphism */
+.divine-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 3rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 32px;
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 30px 60px -12px rgba(0, 0, 0, 0.6),
+    inset 0 0 30px rgba(255, 255, 255, 0.05);
+  transform: translateY(50px);
+  opacity: 0;
+  transition: all 1.2s var(--transition-slow);
+}
+
+.divine-container.visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Divine section titles with golden accents */
+.divine-title {
+  font-size: 4rem;
+  font-weight: 800;
+  margin-bottom: 2.5rem;
+  text-align: center;
+  position: relative;
+  display: inline-block;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, var(--gold-light), var(--platinum-light), var(--gold-light));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 300% 300%;
+  animation: titleShine 5s ease infinite;
+}
+
+@keyframes titleShine {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.divine-title::after {
+  content: "";
+  position: absolute;
+  bottom: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 150px;
+  height: 5px;
+  background: linear-gradient(90deg, transparent, var(--gold-medium), transparent);
+  border-radius: 5px;
+}
+
+/* Divine cards with premium effects */
+.divine-card {
+  position: relative;
+  padding: 2.5rem;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 20px 40px -10px rgba(0, 0, 0, 0.4),
+    inset 0 0 15px rgba(255, 255, 255, 0.1);
+  transform: translateY(0);
+  transition: all 0.5s var(--transition-ease);
+  overflow: hidden;
+  z-index: 1;
+}
+
+.divine-card::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, 
+    var(--gold-light), 
+    var(--gold-medium), 
+    var(--gold-dark), 
+    var(--gold-medium), 
+    var(--gold-light));
+  background-size: 400% 400%;
+  z-index: -1;
+  border-radius: 22px;
+  animation: borderShine 3s ease infinite;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.divine-card:hover::before {
+  opacity: 1;
+}
+
+.divine-card:hover {
+  transform: translateY(-15px);
+  box-shadow: 
+    0 30px 60px -15px rgba(0, 0, 0, 0.5),
+    inset 0 0 20px rgba(255, 255, 255, 0.2),
+    0 0 40px rgba(245, 208, 66, 0.4);
+}
+
+@keyframes borderShine {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Divine buttons with premium effects */
+.divine-button {
+  position: relative;
+  display: inline-block;
+  padding: 1.2rem 2.5rem;
+  background: linear-gradient(135deg, var(--gold-light), var(--gold-medium));
+  color: var(--onyx-dark);
+  font-weight: 700;
+  font-size: 1.1rem;
+  border-radius: 50px;
+  border: none;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.4s var(--transition-ease);
+  box-shadow: 
+    0 10px 25px rgba(245, 208, 66, 0.4),
+    inset 0 2px 2px rgba(255, 255, 255, 0.5);
+  z-index: 1;
+}
+
+.divine-button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.6), 
+    transparent);
+  transition: all 0.6s ease;
+  z-index: -1;
+}
+
+.divine-button:hover::before {
+  left: 100%;
+}
+
+.divine-button:hover {
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 
+    0 15px 30px rgba(245, 208, 66, 0.6),
+    inset 0 2px 2px rgba(255, 255, 255, 0.7),
+    0 0 30px rgba(245, 208, 66, 0.8);
+}
+
+.divine-button:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Divine floating elements */
+.divine-floating {
+  animation: divineFloat 6s ease-in-out infinite;
+  position: relative;
+}
+
+@keyframes divineFloat {
+  0% { transform: translateY(0) translateX(0); }
+  25% { transform: translateY(-20px) translateX(10px); }
+  50% { transform: translateY(0) translateX(20px); }
+  75% { transform: translateY(10px) translateX(10px); }
+  100% { transform: translateY(0) translateX(0); }
+}
+
+/* Divine particle effects */
+.particle {
+  position: absolute;
+  background: var(--gold-light);
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 9999;
+}
+
+/* Divine text effects */
+.divine-text {
+  position: relative;
+  display: inline-block;
+}
+
+.divine-text::after {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--gold-light), var(--gold-dark));
+  transition: width 0.5s var(--transition-ease);
+}
+
+.divine-text:hover::after {
+  width: 100%;
+}
+
+/* Divine divider */
+.divine-divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold-medium), transparent);
+  margin: 2rem 0;
+  position: relative;
+}
+
+.divine-divider::before {
+  content: "✦";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--gold-light);
+  font-size: 1.5rem;
+  background: var(--onyx-dark);
+  padding: 0 1rem;
+}
+
+/* Divine icon effects */
+.divine-icon {
+  font-size: 3.5rem;
+  background: linear-gradient(135deg, var(--gold-light), var(--gold-dark));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 5px 10px rgba(245, 208, 66, 0.4));
+  transition: all 0.3s var(--transition-ease);
+}
+
+.divine-icon:hover {
+  transform: scale(1.2) rotate(10deg);
+  filter: drop-shadow(0 10px 20px rgba(245, 208, 66, 0.6));
+}
+
+/* Divine image effects */
+.divine-image {
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  transition: all 0.5s var(--transition-ease);
+}
+
+.divine-image::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, 
+    rgba(245, 208, 66, 0.2), 
+    rgba(230, 184, 0, 0.1), 
+    rgba(184, 134, 11, 0.2));
+  opacity: 0;
+  transition: opacity 0.5s var(--transition-ease);
+  z-index: 1;
+}
+
+.divine-image:hover::before {
+  opacity: 1;
+}
+
+.divine-image:hover {
+  transform: scale(1.03);
+  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.6), 0 0 40px rgba(245, 208, 66, 0.3);
+}
+
+.divine-image img {
+  transition: transform 0.5s var(--transition-ease);
+}
+
+.divine-image:hover img {
+  transform: scale(1.1);
+}
+
+/* Divine stats counters */
+.divine-stat {
+  text-align: center;
+  padding: 2rem;
+  position: relative;
+}
+
+.divine-stat-number {
+  font-size: 4rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--gold-light), var(--gold-dark));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 1rem;
+  line-height: 1;
+}
+
+.divine-stat-label {
+  font-size: 1.2rem;
+  color: var(--platinum-light);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+/* Divine testimonials */
+.divine-testimonial {
+  position: relative;
+  padding: 3rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.divine-testimonial::before {
+  content: "\"";
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  font-size: 6rem;
+  color: rgba(245, 208, 66, 0.3);
+  font-family: Georgia, serif;
+  line-height: 1;
+}
+
+/* Divine contact form */
+.divine-form-input {
+  width: 100%;
+  padding: 1.2rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: var(--platinum-light);
+  font-size: 1rem;
+  transition: all 0.3s var(--transition-ease);
+  backdrop-filter: blur(5px);
+}
+
+.divine-form-input:focus {
+  outline: none;
+  border-color: var(--gold-light);
+  box-shadow: 0 0 20px rgba(245, 208, 66, 0.4);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.divine-form-input::placeholder {
+  color: rgba(225, 225, 225, 0.5);
+}
+
+/* Divine section backgrounds */
+.insurance-bg {
+  background: linear-gradient(135deg, #0c1e4d, #1a3a8f, #2a56d6);
+}
+
+.real-estate-bg {
+  background: linear-gradient(135deg, #043d2e, #0a7d5f, #10b981);
+}
+
+.tourism-bg {
+  background: linear-gradient(135deg, #5a0c2d, #9d174d, #ec4899);
+}
+
+/* Responsive styles for divine design */
+@media (max-width: 1024px) {
+  .divine-title {
+    font-size: 3rem;
+  }
+  
+  .divine-container {
+    padding: 2rem;
+  }
+  
+  .divine-card {
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .divine-section {
+    padding: 3rem 1rem;
+  }
+  
+  .divine-title {
+    font-size: 2.5rem;
+  }
+  
+  .divine-container {
+    padding: 1.5rem;
+    border-radius: 16px;
+  }
+  
+  .divine-card {
+    padding: 1.5rem;
+  }
+  
+  .divine-button {
+    padding: 1rem 2rem;
+    font-size: 1rem;
+  }
+  
+  .divine-stat-number {
+    font-size: 3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .divine-title {
+    font-size: 2rem;
+  }
+  
+  .divine-section {
+    padding: 2rem 0.5rem;
+  }
+  
+  .divine-container {
+    padding: 1rem;
+  }
+  
+  .divine-card {
+    padding: 1rem;
+  }
+}

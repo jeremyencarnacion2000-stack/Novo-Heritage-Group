@@ -1,0 +1,137 @@
+{
+    "name": "[Godmode] 3. Email Reactivator (Groq)",
+    "settings": {},
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "triggerAtHour": 9
+                        }
+                    ]
+                }
+            },
+            "id": "82e64700-21da-4bb8-833f-70b38141bf56",
+            "name": "Daily Schedule 9 AM",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.3,
+            "position": [
+                240,
+                1072
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "SELECT p.usuario_id, u.email, u.nombre, p.intereses, p.score_interes, p.ultima_actividad FROM perfil_usuario p JOIN usuarios u ON p.usuario_id = u.id::text WHERE p.ultima_actividad < NOW() - INTERVAL '7 days' LIMIT 50",
+                "options": {}
+            },
+            "id": "02cd4648-66f2-429f-a8b9-21782818e8b8",
+            "name": "Get Inactive Users",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 2.6,
+            "position": [
+                464,
+                1072
+            ]
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "=Genera un email de reactivación personalizado para {{ $json.nombre }}.\nIntereses: {{ JSON.stringify($json.intereses) }}\nScore: {{ JSON.stringify($json.score_interes) }}\nGenera SOLO HTML.",
+                "options": {
+                    "systemMessage": "Eres un experto en marketing de lujo para Novo Heritage."
+                }
+            },
+            "id": "551b949b-e9b3-445b-a139-5ba2b0f4071f",
+            "name": "Generate Personalized Email",
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 3.1,
+            "position": [
+                688,
+                960
+            ]
+        },
+        {
+            "parameters": {
+                "model": "llama-3.3-70b-versatile",
+                "options": {
+                    "temperature": 0.8
+                }
+            },
+            "id": "9bb4af6c-6ada-4063-a6c9-4209dd7be616",
+            "name": "Groq Model",
+            "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+            "typeVersion": 1,
+            "position": [
+                768,
+                1184
+            ]
+        },
+        {
+            "parameters": {
+                "sendTo": "={{ $(\"Get Inactive Users\").item.json.email }}",
+                "subject": "={{ $(\"Get Inactive Users\").item.json.nombre }}, ofertas exclusivas",
+                "message": "={{ $json.output }}",
+                "options": {
+                    "senderName": "Novo Heritage"
+                }
+            },
+            "id": "52e29878-c263-4d09-99ce-eee56e5b7a5a",
+            "name": "Send Reactivation Email",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 2.2,
+            "position": [
+                1040,
+                1072
+            ]
+        }
+    ],
+    "connections": {
+        "Daily Schedule 9 AM": {
+            "main": [
+                [
+                    {
+                        "node": "Get Inactive Users",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Inactive Users": {
+            "main": [
+                [
+                    {
+                        "node": "Generate Personalized Email",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Generate Personalized Email": {
+            "main": [
+                [
+                    {
+                        "node": "Send Reactivation Email",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Groq Model": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Generate Personalized Email",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

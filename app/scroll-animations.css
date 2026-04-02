@@ -1,0 +1,207 @@
+/* Scroll Animation Styles - Enhanced version */
+
+@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Odibee+Sans&display=swap');
+
+/* Wave animation for background */
+@keyframes wave {
+  0% {
+    background-position-x: 0;
+  }
+  100% {
+    background-position-x: 1000px;
+  }
+}
+
+.animate-wave {
+  animation: wave 12s linear infinite;
+  background-size: 1000px 100%;
+}
+
+/* Enhanced Scroll Animations */
+.autoRotate {
+  animation: autoRotateAnimation linear both;
+  animation-timeline: view();
+  animation-range: entry 0% exit 100%;
+}
+
+@keyframes autoRotateAnimation {
+  from {
+    transform: rotate(0deg) scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: rotate(360deg) scale(1);
+    opacity: 1;
+  }
+}
+
+.autoShow {
+  animation: autoShowAnimation both;
+  animation-timeline: view();
+  animation-range: entry 20% cover 50%;
+}
+
+@keyframes autoShowAnimation {
+  from {
+    opacity: 0;
+    transform: translateY(100px) scale(0.9);
+    filter: blur(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.autoBlur {
+  animation: autoBlurAnimation linear both;
+  animation-timeline: view();
+  animation-range: entry 10% exit 90%;
+}
+
+@keyframes autoBlurAnimation {
+  0% {
+    filter: blur(30px);
+    opacity: 0;
+    transform: scale(1.2);
+  }
+  45%, 55% {
+    filter: blur(0px);
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    filter: blur(30px);
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+/* Glowing effect */
+.glow {
+  animation: glow 3s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+  }
+  to {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 30px rgba(255, 215, 0, 0.6);
+  }
+}
+
+/* Gradient animation */
+.gradient-animation {
+  background-size: 300% 300%;
+  animation: gradientAnimation 8s ease infinite;
+}
+
+@keyframes gradientAnimation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Fade in up animation */
+.fade-in-up {
+  animation: fadeInUp 0.8s ease-out forwards;
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scale in animation */
+.scale-in {
+  animation: scaleIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  transform: scale(0.8);
+  opacity: 0;
+}
+
+@keyframes scaleIn {
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Staggered animations */
+.staggered-animation > * {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.staggered-animation > *:nth-child(1) {
+  animation: staggeredFadeIn 0.6s ease-out 0.1s forwards;
+}
+
+.staggered-animation > *:nth-child(2) {
+  animation: staggeredFadeIn 0.6s ease-out 0.2s forwards;
+}
+
+.staggered-animation > *:nth-child(3) {
+  animation: staggeredFadeIn 0.6s ease-out 0.3s forwards;
+}
+
+.staggered-animation > *:nth-child(4) {
+  animation: staggeredFadeIn 0.6s ease-out 0.4s forwards;
+}
+
+.staggered-animation > *:nth-child(5) {
+  animation: staggeredFadeIn 0.6s ease-out 0.5s forwards;
+}
+
+@keyframes staggeredFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive styles */
+@media screen and (max-width: 768px) {
+  .autoShow {
+    animation-range: entry 15% cover 40%;
+  }
+  
+  .autoRotate {
+    animation-range: entry 0% exit 100%;
+  }
+  
+  .autoBlur {
+    animation-range: entry 5% exit 95%;
+  }
+  
+  .staggered-animation > *:nth-child(1) {
+    animation: staggeredFadeIn 0.5s ease-out 0.05s forwards;
+  }
+
+  .staggered-animation > *:nth-child(2) {
+    animation: staggeredFadeIn 0.5s ease-out 0.1s forwards;
+  }
+
+  .staggered-animation > *:nth-child(3) {
+    animation: staggeredFadeIn 0.5s ease-out 0.15s forwards;
+  }
+
+  .staggered-animation > *:nth-child(4) {
+    animation: staggeredFadeIn 0.5s ease-out 0.2s forwards;
+  }
+
+  .staggered-animation > *:nth-child(5) {
+    animation: staggeredFadeIn 0.5s ease-out 0.25s forwards;
+  }
+}

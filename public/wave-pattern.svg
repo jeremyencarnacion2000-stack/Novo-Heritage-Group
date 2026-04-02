@@ -1,0 +1,26 @@
+<svg width="1200" height="120" viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg">
+  <path 
+    d="M0,60 C150,100 300,20 450,60 C600,100 750,20 900,60 C1050,100 1200,20 1200,60 L1200,120 L0,120 Z" 
+    fill="rgba(255,255,255,0.1)"
+  >
+    <animateTransform 
+      attributeName="transform" 
+      type="translate" 
+      values="0,0; -100,0; 0,0" 
+      dur="10s" 
+      repeatCount="indefinite"
+    />
+  </path>
+  <path 
+    d="M0,80 C150,40 300,100 450,80 C600,60 750,100 900,80 C1050,60 1200,100 1200,80 L1200,120 L0,120 Z" 
+    fill="rgba(255,255,255,0.05)"
+  >
+    <animateTransform 
+      attributeName="transform" 
+      type="translate" 
+      values="0,0; 100,0; 0,0" 
+      dur="15s" 
+      repeatCount="indefinite"
+    />
+  </path>
+</svg>

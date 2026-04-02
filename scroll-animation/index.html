@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scroll-Driven Video | Landing</title>
+  <meta name="description" content="Immersive scroll-driven video experience. Scroll down to play, scroll up to rewind." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800;900&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset ─────────────────────────────── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      color: #f0eef6;
+      background: #06080f;
+      overflow-x: hidden;
+    }
+
+    /* ── Scroll Spacer — creates the scrollable area ── */
+    #scroll-spacer {
+      height: 1000vh;
+      position: relative;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* ── Video element (hidden, used for frame extraction) ── */
+    #video-bg {
+      position: fixed;
+      top: 0; left: 0;
+      width: 1px; height: 1px;
+      opacity: 0;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* ── Display Canvas (renders extracted video frames) ── */
+    #display-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      z-index: 0;
+      object-fit: cover;
+    }
+
+    /* ── Canvas Fallback (used if no video) ── */
+    #three-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      z-index: 0;
+    }
+
+    /* ── Gradient Overlays ────────────────── */
+    #gradient-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      z-index: 2;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 80% 60% at 30% 0%, rgba(15, 10, 40, 0.60) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 100%, rgba(0, 5, 20, 0.50) 0%, transparent 50%),
+        linear-gradient(180deg, rgba(4,3,10,0.35) 0%, rgba(2,2,8,0.85) 100%);
+    }
+
+    /* ── Vignette ─────────────────────────── */
+    #vignette {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      z-index: 3;
+      pointer-events: none;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(6,8,15,0.65) 100%);
+    }
+
+    /* ── Progress Bar ─────────────────────── */
+    #progress-bar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 3px;
+      z-index: 200;
+      background: linear-gradient(90deg, #7c5aff, #38bdf8, #ec4899);
+      border-radius: 0 2px 2px 0;
+      width: 0%;
+      transition: width 0.08s linear;
+    }
+
+    /* ── Hero Section ─────────────────────── */
+    #hero {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      padding-left: clamp(40px, 8vw, 140px);
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 20px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(16px);
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      color: rgba(240,238,246,0.60);
+      margin-bottom: 32px;
+      text-transform: uppercase;
+    }
+
+    .hero-badge .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #7c5aff;
+      box-shadow: 0 0 10px #7c5aff;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.5); }
+    }
+
+    .hero-title {
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      font-size: clamp(2.6rem, 7.5vw, 7rem);
+      font-weight: 800;
+      line-height: 1.05;
+      text-align: left;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #ffffff 0%, #c4b5fd 40%, #7c5aff 70%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      max-width: 900px;
+      padding: 0 24px;
+    }
+
+    .hero-sub {
+      margin-top: 22px;
+      font-size: clamp(0.92rem, 1.6vw, 1.2rem);
+      font-weight: 300;
+      color: rgba(240,238,246,0.50);
+      text-align: left;
+      max-width: 500px;
+      padding: 0;
+      line-height: 1.65;
+    }
+
+    .scroll-cue {
+      position: absolute;
+      bottom: 48px;
+      left: clamp(40px, 8vw, 140px);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .scroll-cue span {
+      font-size: 0.70rem;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(240,238,246,0.30);
+    }
+
+    .scroll-cue .arrow {
+      width: 18px; height: 18px;
+      border-right: 1.5px solid rgba(240,238,246,0.25);
+      border-bottom: 1.5px solid rgba(240,238,246,0.25);
+      transform: rotate(45deg);
+      animation: bounce-arrow 2s ease-in-out infinite;
+    }
+
+    @keyframes bounce-arrow {
+      0%, 100% { transform: rotate(45deg) translateY(0); opacity: 0.4; }
+      50% { transform: rotate(45deg) translateY(6px); opacity: 1; }
+    }
+
+    /* ── Section Labels ───────────────────── */
+    .section-label {
+      position: fixed;
+      z-index: 10;
+      pointer-events: none;
+      text-align: center;
+      width: 100%;
+      top: 50%; left: 0;
+      transform: translateY(-50%);
+      opacity: 0;
+    }
+
+    .section-label h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(1.8rem, 5vw, 4rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff 10%, #a78bfa 60%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .section-label p {
+      margin-top: 12px;
+      font-size: clamp(0.85rem, 1.4vw, 1.05rem);
+      color: rgba(240,238,246,0.40);
+      font-weight: 300;
+    }
+
+    /* ── Frame Counter ────────────────────── */
+    #frame-counter {
+      position: fixed;
+      bottom: 24px; right: 28px;
+      z-index: 200;
+      font-family: 'Space Grotesk', monospace;
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: rgba(240,238,246,0.20);
+      letter-spacing: 0.08em;
+    }
+
+    /* ── Loading state ────────────────────── */
+    #loading-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      z-index: 500;
+      background: #06080f;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.8s ease;
+    }
+
+    #loading-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loader-ring {
+      width: 48px; height: 48px;
+      border: 2px solid rgba(124,90,255,0.15);
+      border-top-color: #7c5aff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loader-text {
+      margin-top: 20px;
+      font-size: 0.82rem;
+      color: rgba(240,238,246,0.35);
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading overlay -->
+  <div id="loading-overlay">
+    <div class="loader-ring"></div>
+    <p class="loader-text">Loading experience…</p>
+  </div>
+
+  <!-- Progress bar -->
+  <div id="progress-bar"></div>
+
+  <!-- Video source (hidden, for frame extraction) -->
+  <video id="video-bg" muted playsinline preload="auto" crossorigin="anonymous">
+    <source src="./video.mp4" type="video/mp4" />
+  </video>
+
+  <!-- Display canvas for smooth frame rendering -->
+  <canvas id="display-canvas"></canvas>
+
+  <!-- Three.js fallback canvas (shown if no video loaded) -->
+  <canvas id="three-canvas"></canvas>
+
+  <!-- Gradient overlay -->
+  <div id="gradient-overlay"></div>
+
+  <!-- Vignette -->
+  <div id="vignette"></div>
+
+  <!-- Hero content -->
+  <div id="hero">
+    <div class="hero-badge">
+      <span class="dot"></span>
+      Scroll to Animate
+    </div>
+    <h1 class="hero-title">Motion in Every Pixel</h1>
+    <p class="hero-sub">Scroll down to play the video forward — scroll up to rewind. A fully interactive, frame-perfect experience.</p>
+    <div class="scroll-cue">
+      <span>Scroll</span>
+      <div class="arrow"></div>
+    </div>
+  </div>
+
+  <!-- Mid-scroll section labels -->
+  <div class="section-label" id="label-expand">
+    <h2>Expanding Universe</h2>
+    <p>Geometry unfolds into infinite space</p>
+  </div>
+  <div class="section-label" id="label-converge">
+    <h2>Convergence</h2>
+    <p>All particles find their orbit</p>
+  </div>
+  <div class="section-label" id="label-finale">
+    <h2>Beyond the Horizon</h2>
+    <p>Where form meets the void</p>
+  </div>
+
+  <!-- Frame counter -->
+  <div id="frame-counter">FRAME 0000</div>
+
+  <!-- Scroll spacer -->
+  <div id="scroll-spacer"></div>
+
+  <!-- Three.js (fallback for when no video is loaded) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <script>
+  (function() {
+    'use strict';
+
+    // ── DOM refs ──────────────────────────
+    const video        = document.getElementById('video-bg');
+    const canvas       = document.getElementById('three-canvas');
+    const heroEl       = document.getElementById('hero');
+    const heroBadge    = document.querySelector('.hero-badge');
+    const heroTitle    = document.querySelector('.hero-title');
+    const heroSub      = document.querySelector('.hero-sub');
+    const scrollCue    = document.querySelector('.scroll-cue');
+    const progressBar  = document.getElementById('progress-bar');
+    const frameCounter = document.getElementById('frame-counter');
+    const labelExpand  = document.getElementById('label-expand');
+    const labelConverge = document.getElementById('label-converge');
+    const labelFinale  = document.getElementById('label-finale');
+    const loadingOverlay = document.getElementById('loading-overlay');
+
+    // ── Scroll State ─────────────────────
+    let scrollProgress = 0;
+    let targetProgress = 0;
+
+    function getScrollProgress() {
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      return docHeight > 0 ? Math.min(Math.max(scrollTop / docHeight, 0), 1) : 0;
+    }
+
+    window.addEventListener('scroll', () => {
+      targetProgress = getScrollProgress();
+    }, { passive: true });
+
+    // ── Helpers ──────────────────────────
+    function smoothstep(edge0, edge1, x) {
+      const t = Math.min(Math.max((x - edge0) / (edge1 - edge0), 0), 1);
+      return t * t * (3 - 2 * t);
+    }
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    function easeInOutCubic(t) {
+      return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
+    }
+
+    // ══════════════════════════════════════
+    // VIDEO MODE — pre-extract frames for buttery smooth scroll
+    // ══════════════════════════════════════
+    const displayCanvas = document.getElementById('display-canvas');
+    const displayCtx = displayCanvas.getContext('2d');
+    let videoReady = false;
+    let videoDuration = 0;
+    let frames = [];           // Array of ImageBitmap
+    let totalFrameCount = 0;
+    let extractionDone = false;
+    let lastDrawnFrame = -1;
+
+    // Target ~120 frames for a short video, max 300 for longer ones
+    function getTargetFrameCount(duration) {
+      const fps = 24; // extraction density
+      return Math.min(Math.max(Math.ceil(duration * fps), 60), 360);
+    }
+
+    function sizeDisplayCanvas() {
+      const dpr = Math.min(window.devicePixelRatio, 2);
+      displayCanvas.width = window.innerWidth * dpr;
+      displayCanvas.height = window.innerHeight * dpr;
+      displayCanvas.style.width = '100vw';
+      displayCanvas.style.height = '100vh';
+    }
+
+    // Cover-fit drawing (like object-fit: cover)
+    function drawFrameCover(source) {
+      const cw = displayCanvas.width;
+      const ch = displayCanvas.height;
+      const sw = source.width;
+      const sh = source.height;
+      const scale = Math.max(cw / sw, ch / sh);
+      const dw = sw * scale;
+      const dh = sh * scale;
+      const dx = (cw - dw) / 2;
+      const dy = (ch - dh) / 2;
+      displayCtx.drawImage(source, dx, dy, dw, dh);
+    }
+
+    async function extractFrames() {
+      totalFrameCount = getTargetFrameCount(videoDuration);
+      const interval = videoDuration / totalFrameCount;
+      const loaderText = document.querySelector('.loader-text');
+      frames = new Array(totalFrameCount);
+
+      // Extract frames sequentially (seeking)
+      for (let i = 0; i < totalFrameCount; i++) {
+        const time = i * interval;
+        video.currentTime = time;
+
+        await new Promise(resolve => {
+          video.addEventListener('seeked', resolve, { once: true });
+        });
+
+        // Capture frame as ImageBitmap for fast drawing
+        try {
+          frames[i] = await createImageBitmap(video);
+        } catch(e) {
+          // Fallback: draw directly later
+          frames[i] = null;
+        }
+
+        // Update loading progress
+        const pct = Math.round(((i + 1) / totalFrameCount) * 100);
+        if (loaderText) loaderText.textContent = `Extracting frames… ${pct}%`;
+      }
+
+      extractionDone = true;
+      loadingOverlay.classList.add('hidden');
+
+      // Draw first frame immediately
+      if (frames[0]) {
+        drawFrameCover(frames[0]);
+        lastDrawnFrame = 0;
+      }
+    }
+
+    function tryInitVideo() {
+      if (!video.querySelector('source') && !video.src) {
+        video.src = './video.mp4';
+      }
+
+      sizeDisplayCanvas();
+
+      video.addEventListener('loadedmetadata', () => {
+        videoDuration = video.duration;
+        videoReady = true;
+        video.pause();
+        canvas.style.display = 'none'; // Hide Three.js fallback
+        extractFrames(); // Start frame extraction
+      });
+
+      video.addEventListener('error', () => {
+        video.style.display = 'none';
+        displayCanvas.style.display = 'none';
+        initThreeFallback();
+        loadingOverlay.classList.add('hidden');
+      });
+
+      video.load();
+    }
+
+    // ══════════════════════════════════════
+    // THREE.JS FALLBACK — procedural 3D animation
+    // ══════════════════════════════════════
+    let threeActive = false;
+    let renderer, scene, camera;
+    let icosahedron, wireIco, icoMat, wireMat;
+    let particles, pGeo, pMat, pOriginals;
+    let rings = [], orbs = [];
+    const particleCount = 2000;
+
+    function initThreeFallback() {
+      threeActive = true;
+
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setClearColor(0x06080f, 1);
+
+      scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(0x06080f, 0.035);
+
+      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
+      camera.position.set(0, 0, 12);
+
+      scene.add(new THREE.AmbientLight(0x4422aa, 0.4));
+      const pl1 = new THREE.PointLight(0x7c5aff, 2, 50);
+      pl1.position.set(5, 5, 5); scene.add(pl1);
+      const pl2 = new THREE.PointLight(0x38bdf8, 1.5, 50);
+      pl2.position.set(-5, -3, 4); scene.add(pl2);
+      const pl3 = new THREE.PointLight(0xec4899, 1, 40);
+      pl3.position.set(0, 8, -5); scene.add(pl3);
+
+      const icoGeo = new THREE.IcosahedronGeometry(2, 1);
+      icoMat = new THREE.MeshPhysicalMaterial({
+        color: 0x7c5aff, metalness: 0.3, roughness: 0.2,
+        transparent: true, opacity: 0.85,
+        emissive: 0x3311aa, emissiveIntensity: 0.15,
+      });
+      icosahedron = new THREE.Mesh(icoGeo, icoMat);
+      scene.add(icosahedron);
+
+      const wireGeo = new THREE.IcosahedronGeometry(2.05, 1);
+      wireMat = new THREE.MeshBasicMaterial({ color: 0xa78bfa, wireframe: true, transparent: true, opacity: 0.2 });
+      wireIco = new THREE.Mesh(wireGeo, wireMat);
+      scene.add(wireIco);
+
+      const ringConfigs = [
+        { radius: 3.5, tube: 0.02, color: 0x7c5aff, speed: 1.0, axis: 'x' },
+        { radius: 4.2, tube: 0.015, color: 0x38bdf8, speed: 0.7, axis: 'y' },
+        { radius: 5.0, tube: 0.01, color: 0xec4899, speed: 0.5, axis: 'z' },
+      ];
+      ringConfigs.forEach(cfg => {
+        const geo = new THREE.TorusGeometry(cfg.radius, cfg.tube, 16, 100);
+        const mat = new THREE.MeshBasicMaterial({ color: cfg.color, transparent: true, opacity: 0.4 });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.userData = cfg;
+        scene.add(mesh); rings.push(mesh);
+      });
+
+      pGeo = new THREE.BufferGeometry();
+      const pPositions = new Float32Array(particleCount * 3);
+      const pColors = new Float32Array(particleCount * 3);
+      pOriginals = new Float32Array(particleCount * 3);
+      const palette = [
+        new THREE.Color(0x7c5aff), new THREE.Color(0x38bdf8),
+        new THREE.Color(0xec4899), new THREE.Color(0xa78bfa), new THREE.Color(0x818cf8),
+      ];
+      for (let i = 0; i < particleCount; i++) {
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(2 * Math.random() - 1);
+        const r = 3 + Math.random() * 18;
+        const x = r * Math.sin(phi) * Math.cos(theta);
+        const y = r * Math.sin(phi) * Math.sin(theta);
+        const z = r * Math.cos(phi);
+        pPositions[i*3] = x; pPositions[i*3+1] = y; pPositions[i*3+2] = z;
+        pOriginals[i*3] = x; pOriginals[i*3+1] = y; pOriginals[i*3+2] = z;
+        const c = palette[Math.floor(Math.random() * palette.length)];
+        pColors[i*3] = c.r; pColors[i*3+1] = c.g; pColors[i*3+2] = c.b;
+      }
+      pGeo.setAttribute('position', new THREE.BufferAttribute(pPositions, 3));
+      pGeo.setAttribute('color', new THREE.BufferAttribute(pColors, 3));
+      pMat = new THREE.PointsMaterial({
+        size: 0.06, vertexColors: true, transparent: true, opacity: 0.7,
+        sizeAttenuation: true, blending: THREE.AdditiveBlending, depthWrite: false,
+      });
+      particles = new THREE.Points(pGeo, pMat);
+      scene.add(particles);
+
+      for (let i = 0; i < 8; i++) {
+        const geo = new THREE.SphereGeometry(0.08 + Math.random() * 0.12, 16, 16);
+        const mat = new THREE.MeshBasicMaterial({ color: palette[i % palette.length], transparent: true, opacity: 0.6 });
+        const orb = new THREE.Mesh(geo, mat);
+        orb.userData = {
+          angle: Math.random() * Math.PI * 2, radius: 4 + Math.random() * 4,
+          speed: 0.3 + Math.random() * 0.6, yOffset: (Math.random() - 0.5) * 6,
+          phase: Math.random() * Math.PI * 2,
+        };
+        scene.add(orb); orbs.push(orb);
+      }
+    }
+
+    function updateThree(t) {
+      if (!threeActive) return;
+      const camAngle = t * Math.PI * 3;
+      const camRadius = lerp(12, 5, easeInOutCubic(Math.min(t * 2, 1)));
+      const camHeight = lerp(0, 4, smoothstep(0, 0.5, t)) - lerp(0, 6, smoothstep(0.5, 1, t));
+      camera.position.set(Math.sin(camAngle) * camRadius, camHeight, Math.cos(camAngle) * camRadius);
+      camera.lookAt(0, 0, 0);
+      const icoScale = lerp(1, 2.5, smoothstep(0.1, 0.5, t)) * lerp(1, 0.3, smoothstep(0.7, 1.0, t));
+      icosahedron.scale.setScalar(icoScale); wireIco.scale.setScalar(icoScale * 1.02);
+      icosahedron.rotation.x = t * Math.PI * 2; icosahedron.rotation.y = t * Math.PI * 3;
+      wireIco.rotation.x = t * Math.PI * 2 + 0.1; wireIco.rotation.y = t * Math.PI * 3 - 0.1;
+      icoMat.opacity = lerp(0.85, 0.15, smoothstep(0.6, 0.9, t));
+      wireMat.opacity = lerp(0.2, 0.6, smoothstep(0.4, 0.8, t));
+      const hue = (t * 0.3) % 1;
+      icoMat.color.setHSL(0.72 + hue * 0.15, 0.7, 0.55);
+      icoMat.emissive.setHSL(0.72 + hue * 0.15, 0.8, 0.15);
+      rings.forEach(ring => {
+        const cfg = ring.userData;
+        ring.rotation[cfg.axis] = t * Math.PI * 4 * cfg.speed;
+        ring.rotation[cfg.axis === 'x' ? 'y' : 'x'] = Math.sin(t * Math.PI * 2) * 0.3;
+        ring.scale.setScalar(lerp(1, 1.5, smoothstep(0.2, 0.6, t)));
+        ring.material.opacity = lerp(0.4, 0.15, smoothstep(0.7, 1.0, t));
+      });
+      const positions = pGeo.attributes.position.array;
+      for (let i = 0; i < particleCount; i++) {
+        const ox = pOriginals[i*3], oy = pOriginals[i*3+1], oz = pOriginals[i*3+2];
+        const contract = smoothstep(0, 0.3, t), explode = smoothstep(0.3, 0.7, t), settle = smoothstep(0.7, 1.0, t);
+        const scale = lerp(1, 0.3, contract) * lerp(1, 3.5, explode) * lerp(1, 0.6, settle);
+        const sa = t * Math.PI * 4, cs = Math.cos(sa * 0.3), ss = Math.sin(sa * 0.3);
+        positions[i*3] = ox*scale*cs - oz*scale*ss*0.3;
+        positions[i*3+1] = oy*scale + Math.sin(t * Math.PI * 4 + i) * explode * 0.5;
+        positions[i*3+2] = oz*scale*cs + ox*scale*ss*0.3;
+      }
+      pGeo.attributes.position.needsUpdate = true;
+      pMat.opacity = lerp(0.7, 0.3, smoothstep(0.8, 1.0, t));
+      orbs.forEach(orb => {
+        const ud = orb.userData;
+        const a = ud.angle + t * Math.PI * 4 * ud.speed;
+        const r = ud.radius * lerp(1, 1.8, smoothstep(0.2, 0.6, t));
+        orb.position.set(Math.cos(a)*r, ud.yOffset + Math.sin(t*Math.PI*6 + ud.phase)*2, Math.sin(a)*r);
+        orb.material.opacity = lerp(0.6, 0.15, smoothstep(0.8, 1.0, t));
+      });
+      scene.fog.density = lerp(0.035, 0.015, smoothstep(0.1, 0.5, t));
+      renderer.render(scene, camera);
+    }
+
+    // ══════════════════════════════════════
+    // MAIN ANIMATION LOOP
+    // ══════════════════════════════════════
+    function animate() {
+      requestAnimationFrame(animate);
+
+      // Smoother interpolation (0.12 instead of 0.08)
+      scrollProgress += (targetProgress - scrollProgress) * 0.12;
+      const t = scrollProgress;
+
+      // ── Progress bar + frame counter
+      progressBar.style.width = (t * 100) + '%';
+
+      if (videoReady && extractionDone) {
+        // FRAME BUFFER MODE: instant frame lookup from pre-extracted frames
+        const frameIndex = Math.min(Math.floor(t * (totalFrameCount - 1)), totalFrameCount - 1);
+        if (frameIndex !== lastDrawnFrame && frames[frameIndex]) {
+          drawFrameCover(frames[frameIndex]);
+          lastDrawnFrame = frameIndex;
+        }
+        frameCounter.textContent = 'FRAME ' + String(frameIndex).padStart(4, '0');
+      } else if (videoReady && !extractionDone) {
+        // Still extracting — show current frame count
+        const extracted = frames.filter(f => f).length;
+        frameCounter.textContent = 'LOADING ' + extracted + '/' + totalFrameCount;
+      } else {
+        // THREE.JS FALLBACK
+        const currentFrame = Math.floor(t * 3600);
+        frameCounter.textContent = 'FRAME ' + String(currentFrame).padStart(4, '0');
+        updateThree(t);
+      }
+
+      // ── Hero fade + parallax (each layer moves at different speed)
+      const heroOpacity = 1 - smoothstep(0, 0.12, t);
+      heroEl.style.opacity = heroOpacity;
+
+      // Parallax: badge (slowest), title, subtitle, scroll cue (fastest)
+      const px = t * 1000; // base scroll displacement
+      heroBadge.style.transform = `translateY(${-px * 0.08}px)`;
+      heroTitle.style.transform = `translateY(${-px * 0.18}px)`;
+      heroSub.style.transform   = `translateY(${-px * 0.28}px)`;
+      scrollCue.style.transform = `translateY(${-px * 0.45}px)`;
+
+      // ── Section labels
+      const expandVis = smoothstep(0.18, 0.22, t) - smoothstep(0.32, 0.38, t);
+      labelExpand.style.opacity = expandVis;
+      labelExpand.style.transform = `translateY(${-50 + (1-expandVis)*20}%)`;
+
+      const convergeVis = smoothstep(0.42, 0.46, t) - smoothstep(0.56, 0.62, t);
+      labelConverge.style.opacity = convergeVis;
+      labelConverge.style.transform = `translateY(${-50 + (1-convergeVis)*20}%)`;
+
+      const finaleVis = smoothstep(0.72, 0.76, t) - smoothstep(0.88, 0.94, t);
+      labelFinale.style.opacity = finaleVis;
+      labelFinale.style.transform = `translateY(${-50 + (1-finaleVis)*20}%)`;
+    }
+
+    // ── Resize handler ──────────────────
+    window.addEventListener('resize', () => {
+      if (videoReady) {
+        sizeDisplayCanvas();
+        // Redraw current frame at new size
+        if (lastDrawnFrame >= 0 && frames[lastDrawnFrame]) {
+          drawFrameCover(frames[lastDrawnFrame]);
+        }
+      }
+      if (threeActive) {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+    });
+
+    // ── Init ─────────────────────────────
+    tryInitVideo();
+    animate();
+
+    // Auto-dismiss loading after 30s max (frame extraction may take a while)
+    setTimeout(() => {
+      loadingOverlay.classList.add('hidden');
+    }, 30000);
+
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+Eres Antigravity. Retomamos el proyecto "NovoHeritage - Inventario Inmobiliario". 
+
+**CONTEXTO TÉCNICO ACTUAL:**
+1. **Infraestructura:** Mudamos n8n de Render a Hugging Face Spaces (Docker, 16GB RAM) porque consumía demasiada memoria. Ahora corre perfecto y ultra-rápido en `suskj501-n8n.hf.space`.
+2. **Base de Datos:** Estamos usando Neon Serverless Postgres (`neondb_owner` / `ep-rapid-hill-adiehuvc...`) tanto para el backend de Evolution API, como para el backend y almacenamiento de n8n.
+3. **Flujos (Workflows) Activos:**
+   - `[FINAL OFICIAL] Godmode Backfill V15`: Pagina los 20,000 mensajes históricos de WhatsApp de 50 en 50 usando un OFFSET de SQL, filtra el texto, lo manda a Groq (llama-3.1-70b) y extrae "proyecto, zona, comision" para guardarlo en la tabla `inventario_digital`. (¡Ya corregimos todos los errores de sintaxis "="!).
+   - `[REAL-TIME OFICIAL] WhatsApp Ingestor`: Atrapador en tiempo real conectado al Webhook de Evolution API (`/webhook/whatsapp-webhook`).
+4. **Seguridad:** Generamos una `N8N_ENCRYPTION_KEY` súper segura incrustada en el Dockerfile y configuramos el acceso SSL (`PGSSLMODE=require`) para la base de datos Neon.
+5. **Estado:** Todo está activado, en verde, y el backend PostgreSQL tiene las Credenciales correctas.
+
+**MISIÓN ACTUAL:**
+(Dime qué quieres que hagamos ahora: ¿Monitorizar el progreso del backfill? ¿Configurar algún frontend? ¿Mejorar las respuestas de IA?)

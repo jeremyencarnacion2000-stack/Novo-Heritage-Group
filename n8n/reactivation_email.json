@@ -1,0 +1,154 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "82e64700-21da-4bb8-833f-70b38141bf56",
+      "name": "Daily Schedule 9 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        240,
+        1072
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT p.usuario_id, u.email, u.nombre, p.intereses, p.score_interes, p.ultima_actividad FROM perfil_usuario p JOIN usuarios u ON p.usuario_id = u.id::text WHERE p.ultima_actividad < NOW() - INTERVAL '7 days' LIMIT 50",
+        "options": {}
+      },
+      "id": "02cd4648-66f2-429f-a8b9-21782818e8b8",
+      "name": "Get Inactive Users",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        464,
+        1072
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "CvfAMQyiDbqrANJd",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Genera un email ultra-personalizado de reactivación para:\n\nNombre: {{ $json.nombre }}\nIntereses: {{ JSON.stringify($json.intereses) }}\nScore de Interés: {{ JSON.stringify($json.score_interes) }}\nÚltima Actividad: {{ $json.ultima_actividad }}\n\nEl email debe:\n1. Ser premium y profesional (tono Novo Heritage)\n2. Mencionar específicamente sus intereses principales\n3. Ofrecer contenido relevante basado en su score\n4. Incluir un call-to-action personalizado\n5. Máximo 200 palabras\n\nGenera SOLO el cuerpo del email en HTML, sin asunto.",
+        "options": {
+          "systemMessage": "Eres un experto en marketing de lujo para Novo Heritage. Creas emails personalizados que reflejan exclusividad, profesionalismo y atención al detalle. Tu tono es cálido pero sofisticado, y siempre destacas el valor premium de nuestros servicios."
+        }
+      },
+      "id": "551b949b-e9b3-445b-a139-5ba2b0f4071f",
+      "name": "Generate Personalized Email",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        688,
+        960
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {
+          "temperature": 0.8
+        }
+      },
+      "id": "727ed734-850a-418b-9fc2-1f293bb75437",
+      "name": "OpenAI Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        768,
+        1184
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $(\"Get Inactive Users\").item.json.email }}",
+        "subject": "={{ $(\"Get Inactive Users\").item.json.nombre }}, descubra nuestras nuevas oportunidades exclusivas",
+        "message": "={{ $json.output }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Novo Heritage"
+        }
+      },
+      "id": "52e29878-c263-4d09-99ce-eee56e5b7a5a",
+      "name": "Send Reactivation Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1040,
+        1072
+      ],
+      "webhookId": "a098c38b-6edd-46fe-aaa3-ba95c2259cda",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mBHOwj2XtS9CENgv",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Daily Schedule 9 AM": {
+      "main": [
+        [
+          {
+            "node": "Get Inactive Users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Inactive Users": {
+      "main": [
+        [
+          {
+            "node": "Generate Personalized Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Personalized Email": {
+      "main": [
+        [
+          {
+            "node": "Send Reactivation Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Personalized Email",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

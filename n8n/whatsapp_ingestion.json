@@ -1,0 +1,164 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "de325382-e44a-47a7-b017-79aecf2cb96a",
+      "name": "WhatsApp Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        640
+      ],
+      "webhookId": "9d3f0ec6-a003-43f4-a2e9-f9ff5c77f7af"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analiza el siguiente mensaje de WhatsApp y extrae la información estructurada.\n\nMensaje: {{ $json.body.message }}\n\nExtrae:\n- intencion_compra: (baja/media/alta)\n- presupuesto: (monto numérico o \"no especificado\")\n- division: (Inmuebles/Seguros/Turismo)\n- tipo_producto: (descripción del producto de interés)\n- ubicacion: (ubicación mencionada o \"no especificada\")\n- notas: (observaciones adicionales relevantes)\n\nResponde SOLO con el JSON estructurado, sin texto adicional.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Eres un asistente de análisis de intención de compra para Novo Heritage, una empresa premium de bienes raíces, seguros y turismo de lujo. Tu tarea es extraer información estructurada de mensajes de clientes potenciales con precisión y profesionalismo."
+        }
+      },
+      "id": "2c079ee7-e7fc-4af8-a367-986d9f8bedb2",
+      "name": "Extract WhatsApp Intent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        464,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "9bb4af6c-6ada-4063-a6c9-4209dd7be616",
+      "name": "Groq Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        480,
+        752
+      ],
+      "credentials": {
+        "groqApi": {
+          "id": "BjFpWR9T4H92nwl9",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": {
+          "intencion_compra": "alta",
+          "presupuesto": "500000",
+          "division": "Inmuebles",
+          "tipo_producto": "Villa de lujo",
+          "ubicacion": "Costa",
+          "notas": "Cliente premium con presupuesto alto"
+        }
+      },
+      "id": "3181b716-d2ef-47a8-987b-d87ec8dd204a",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        608,
+        752
+      ]
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "name",
+          "value": "proyectos_data"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "contenido": "={{ $json.output }}",
+            "tipo_contenido": "whatsapp_intent",
+            "nombre_proyecto": "={{ $json.output.division }} - {{ $json.output.tipo_producto }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "8b7c8ec1-bf98-4f15-8571-4f91e9a3fa28",
+      "name": "Save WhatsApp Project",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        816,
+        640
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "CvfAMQyiDbqrANJd",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "WhatsApp Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract WhatsApp Intent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract WhatsApp Intent": {
+      "main": [
+        [
+          {
+            "node": "Save WhatsApp Project",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Extract WhatsApp Intent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Extract WhatsApp Intent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

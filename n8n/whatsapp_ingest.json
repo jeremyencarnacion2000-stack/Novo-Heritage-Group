@@ -1,0 +1,119 @@
+{
+    "name": "whatsapp_ingest",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "whatsapp-webhook",
+                "options": {}
+            },
+            "id": "webhook-whatsapp",
+            "name": "Webhook WhatsApp",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                400,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "model": "gpt-4o-mini",
+                "messages": {
+                    "message": [
+                        {
+                            "role": "system",
+                            "content": "Analiza el mensaje de WhatsApp entrante y extrae la información en JSON: {\"nombre\": \"...\", \"interes_principal\": \"...\", \"presupuesto\": \"...\", \"metadata\": {...}}. Clasifica el interés entre: INMUEBLES, SEGUROS, TURISMO."
+                        },
+                        {
+                            "content": "={{ $json.body.From }}: {{ $json.body.Body }}"
+                        }
+                    ]
+                },
+                "jsonOutput": true
+            },
+            "id": "openai-extract",
+            "name": "AI Extract Data",
+            "type": "n8n-nodes-base.openAi",
+            "typeVersion": 1.1,
+            "position": [
+                650,
+                300
+            ],
+            "credentials": {
+                "openAiApi": {
+                    "id": "OpenAI account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "=INSERT INTO proyectos_data (nombre_proyecto, sector, descripcion, metadata) \nVALUES ('Interés de {{ $json.choices[0].message.content.nombre }}', '{{ $json.choices[0].message.content.interes_principal }}', 'Consulta vía WhatsApp: {{ $node[\"Webhook WhatsApp\"].json.body.Body }}', '{{ JSON.stringify($json.choices[0].message.content) }}')\nRETURNING proyecto_id;"
+            },
+            "id": "db-insert-project",
+            "name": "Insert Project Data",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 1,
+            "position": [
+                900,
+                200
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "Postgres account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "operation": "executeQuery",
+                "query": "=INSERT INTO usuarios (nombre, email, metadata) \nVALUES ('{{ $json.choices[0].message.content.nombre || \"WhatsApp User\" }}', '{{ $node[\"Webhook WhatsApp\"].json.body.From }}@whatsapp.placeholder', '{\"whatsapp\": \"{{ $node[\"Webhook WhatsApp\"].json.body.From }}\"}')\nON CONFLICT (email) DO UPDATE SET nombre = EXCLUDED.nombre\nRETURNING usuario_id;"
+            },
+            "id": "db-upsert-user",
+            "name": "Upsert WhatsApp User",
+            "type": "n8n-nodes-base.postgres",
+            "typeVersion": 1,
+            "position": [
+                900,
+                400
+            ],
+            "credentials": {
+                "postgres": {
+                    "id": "Postgres account"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Webhook WhatsApp": {
+            "main": [
+                [
+                    {
+                        "node": "AI Extract Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "AI Extract Data": {
+            "main": [
+                [
+                    {
+                        "node": "Insert Project Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Upsert WhatsApp User",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}
