@@ -36,6 +36,7 @@ export default function TurismoClientPage() {
   const [favorites, setFavorites] = useState<Record<string, boolean>>({})
   const [hotels, setHotels] = useState<any[]>([])
   const [isLoadingHotels, setIsLoadingHotels] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   // Advanced Filters State
   const [hotelStars, setHotelStars] = useState<number[]>([])
@@ -63,6 +64,7 @@ export default function TurismoClientPage() {
 
   const fetchHotels = async () => {
     setIsLoadingHotels(true)
+    setError(null)
     try {
       const params = new URLSearchParams()
       if (destination) params.append('destination', destination)
@@ -70,11 +72,21 @@ export default function TurismoClientPage() {
       params.append('maxPrice', priceRange[1].toString())
       if (guestRating > 0) params.append('rating', guestRating.toString())
       if (hotelStars.length > 0) params.append('stars', hotelStars.join(','))
+      
       const response = await fetch(`/api/turismo/hotels?${params.toString()}`)
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+      
       const data = await response.json()
-      setHotels(data)
-    } catch (error) {
-      console.error("Error fetching hotels:", error)
+      if (Array.isArray(data)) {
+        setHotels(data)
+      } else {
+        console.error("API returned non-array data:", data)
+        setHotels([])
+      }
+    } catch (err: any) {
+      console.error("Error fetching hotels:", err)
+      setError(err.message || "Error al cargar ofertas")
+      setHotels([])
     } finally {
       setIsLoadingHotels(false)
     }
@@ -435,79 +447,28 @@ export default function TurismoClientPage() {
                    </div>
                 </div>
               ))
-            ) : hotels.length > 0 ? (
-              hotels.map((hotel) => (
-                <motion.div
-                  key={hotel.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6 }}
-                  className="bg-background border border-primary/10 hover:border-primary/40 transition-all duration-700 overflow-hidden group rounded-none shadow-premium relative h-full flex flex-col"
+            ) : error ? (
+              <div className="col-span-full py-20 text-center glass-premium border-red-500/20">
+                <p className="text-red-400 font-light mb-4 text-xs uppercase tracking-widest">Error de Conexión</p>
+                <h3 className="text-2xl font-serif mb-6 text-foreground/80">{error}</h3>
+                <button 
+                  onClick={() => fetchHotels()}
+                  className="text-[10px] uppercase tracking-[0.3em] text-primary hover:underline"
                 >
-                  <div className="relative aspect-[4/5] overflow-hidden">
-                    <Image src={hotel.image} alt={hotel.name} fill className="object-cover transition-transform duration-1000 group-hover:scale-110 grayscale-[0.2] group-hover:grayscale-0" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-                    <button className="absolute top-6 right-6 p-3 bg-background/80 backdrop-blur-md rounded-none border border-primary/10 text-foreground hover:bg-primary hover:text-black transition-all shadow-xl">
-                      <Heart className="w-4 h-4" />
-                    </button>
-                    <div className="absolute bottom-6 left-8 right-8">
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-primary blur-none">{hotel.rating} Estrellas</span>
-                        <span className="text-[9px] text-foreground/40 uppercase tracking-widest font-bold">{hotel.ratingText} ({hotel.reviews} reviews)</span>
-                      </div>
-                      <h3 className="font-serif text-2xl text-foreground leading-tight group-hover:text-primary transition-colors">{hotel.name}</h3>
-                    </div>
-                  </div>
-                  <div className="p-8 space-y-6 flex-1 flex flex-col bg-background relative z-10">
-                    <div className="flex items-center gap-3 text-[10px] text-foreground/40 font-bold uppercase tracking-widest">
-                      <MapPin className="w-3 h-3 text-primary" />
-                      {hotel.location}
-                    </div>
-                    
-                    <div className="flex-1 space-y-3 border-t border-primary/5 pt-6">
-                       <p className="text-[10px] text-foreground/30 leading-relaxed font-light line-clamp-2">
-                          Experiencia inmersiva en el corazón de {hotel.location.split(',')[0]}. Lujo redefinido por Novo Heritage.
-                       </p>
-                    </div>
-
-                    <div className="flex items-end justify-between pt-6 border-t border-primary/10">
-                      <div>
-                        <p className="text-[9px] text-foreground/30 uppercase tracking-[0.2em] font-bold mb-1">Portfolio {hotel.provider}</p>
-                        <p className="text-3xl font-serif text-foreground font-light">${hotel.price}</p>
-                        <p className="text-[9px] text-primary font-black uppercase tracking-[0.2em]">Noche VIP</p>
-                      </div>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <button className="btn-premium px-8 py-4 text-[10px]">
-                            Reservar
-                          </button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-4xl p-0 bg-transparent border-none overflow-y-auto max-h-[95vh] z-[10001]">
-                          <DialogTitle className="sr-only">Reservar {hotel.name}</DialogTitle>
-                          <DialogDescription className="sr-only">Formulario para reservar estadía en {hotel.name}</DialogDescription>
-                          <div className="bg-background rounded-none p-10 md:p-16 border border-primary/20 relative shadow-2xl">
-                            <TravelQuoteForm 
-                              defaultType="resort"
-                              initialData={{
-                                destination: hotel.location,
-                                origin,
-                                checkIn,
-                                checkOut,
-                                guests,
-                                travelClass,
-                                datos: {
-                                  hotel: hotel.name,
-                                  oferta: hotel.id
-                                }
-                              }}
-                            />
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    </div>
-                  </div>
-                </motion.div>
+                  Reintentar Búsqueda
+                </button>
+              </div>
+            ) : Array.isArray(hotels) && hotels.length > 0 ? (
+              hotels.map((hotel) => (
+                <HotelCard 
+                  key={hotel?.id || Math.random()} 
+                  hotel={hotel} 
+                  origin={origin}
+                  checkIn={checkIn}
+                  checkOut={checkOut}
+                  guests={guests}
+                  travelClass={travelClass}
+                />
               ))
             ) : (
               <div className="col-span-full py-20 text-center glass-premium rounded-none">
@@ -592,4 +553,102 @@ export default function TurismoClientPage() {
       <Footer />
     </div>
   )
+}
+
+function HotelCard({ hotel, origin, checkIn, checkOut, guests, travelClass }: { 
+  hotel: any, origin: string, checkIn: string, checkOut: string, guests: string, travelClass: string 
+}) {
+  if (!hotel) return null;
+
+  // Safe property extraction
+  const name = hotel.name || "Hotel de Lujo";
+  const location = hotel.location || "Destino Novo Heritage";
+  const firstLocationPart = location.split(',')[0] || location;
+  const rating = hotel.rating || "5";
+  const stars = Number(hotel.stars || 5);
+  const ratingText = hotel.ratingText || "Excelente";
+  const reviews = hotel.reviews || 0;
+  const price = hotel.price || 0;
+  const provider = hotel.provider || "Novo Heritage Portfolio";
+  const image = hotel.image || "/luxury-travel-destination-beach-resort.jpg";
+  const id = hotel.id || Math.random().toString();
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6 }}
+      className="bg-background border border-primary/10 hover:border-primary/40 transition-all duration-700 overflow-hidden group rounded-none shadow-premium relative h-full flex flex-col"
+    >
+      <div className="relative aspect-[4/5] overflow-hidden">
+        <Image 
+          src={image} 
+          alt={name} 
+          fill 
+          className="object-cover transition-transform duration-1000 group-hover:scale-110 grayscale-[0.2] group-hover:grayscale-0" 
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+        <button className="absolute top-6 right-6 p-3 bg-background/80 backdrop-blur-md rounded-none border border-primary/10 text-foreground hover:bg-primary hover:text-black transition-all shadow-xl">
+          <Heart className="w-4 h-4" />
+        </button>
+        <div className="absolute bottom-6 left-8 right-8">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-[10px] font-black uppercase tracking-widest text-primary blur-none">{rating} Estrellas</span>
+            <span className="text-[9px] text-foreground/40 uppercase tracking-widest font-bold">{ratingText} ({reviews} reseñas)</span>
+          </div>
+          <h3 className="font-serif text-2xl text-foreground leading-tight group-hover:text-primary transition-colors">{name}</h3>
+        </div>
+      </div>
+      <div className="p-8 space-y-6 flex-1 flex flex-col bg-background relative z-10">
+        <div className="flex items-center gap-3 text-[10px] text-foreground/40 font-bold uppercase tracking-widest">
+          <MapPin className="w-3 h-3 text-primary" />
+          {location}
+        </div>
+        
+        <div className="flex-1 space-y-3 border-t border-primary/5 pt-6">
+           <p className="text-[10px] text-foreground/30 leading-relaxed font-light line-clamp-2">
+              Experiencia inmersiva en el corazón de {firstLocationPart}. Lujo redefinido por Novo Heritage.
+           </p>
+        </div>
+
+        <div className="flex items-end justify-between pt-6 border-t border-primary/10">
+          <div>
+            <p className="text-[9px] text-foreground/30 uppercase tracking-[0.2em] font-bold mb-1">Portfolio {provider}</p>
+            <p className="text-3xl font-serif text-foreground font-light">${price.toLocaleString()}</p>
+            <p className="text-[9px] text-primary font-black uppercase tracking-[0.2em]">Noche VIP</p>
+          </div>
+          <Dialog>
+            <DialogTrigger asChild>
+              <button className="btn-premium px-8 py-4 text-[10px]">
+                Reservar
+              </button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl p-0 bg-transparent border-none overflow-y-auto max-h-[95vh] z-[10001]">
+              <DialogTitle className="sr-only">Reservar {name}</DialogTitle>
+              <DialogDescription className="sr-only">Formulario para reservar su estadía en {name}</DialogDescription>
+              <div className="bg-background rounded-none p-10 md:p-16 border border-primary/20 relative shadow-2xl">
+                <TravelQuoteForm 
+                  defaultType="resort"
+                  initialData={{
+                    destination: location,
+                    origin,
+                    checkIn,
+                    checkOut,
+                    guests,
+                    travelClass,
+                    datos: {
+                      hotel: name,
+                      oferta: id
+                    }
+                  }}
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+    </motion.div>
+  );
 }

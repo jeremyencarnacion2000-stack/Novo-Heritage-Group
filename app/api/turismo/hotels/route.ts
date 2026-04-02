@@ -20,13 +20,32 @@ export async function GET(request: Request) {
             ORDER BY rating DESC
         `;
 
+        if (!dbHotels || !Array.isArray(dbHotels)) {
+            console.warn('Neon returned non-array:', dbHotels);
+            return NextResponse.json(fallbackHotels);
+        }
+
         // Apply additional filtering that's harder in SQL for mock/simple data
         const filteredHotels = dbHotels.filter(hotel => {
-            if (destination && !hotel.location.toLowerCase().includes(destination.toLowerCase())) return false
-            if (stars.length > 0 && !stars.includes(Number(hotel.stars))) return false
-            if (type.length > 0 && !type.includes(hotel.type)) return false
-            if (amenities.length > 0 && !amenities.every(a => hotel.amenities?.includes(a))) return false
-            return true
+            if (!hotel) return false;
+            
+            // Robust check for location
+            const location = hotel.location || "";
+            if (destination && !location.toLowerCase().includes(destination.toLowerCase())) return false;
+            
+            // Robust check for stars
+            const hotelStars = Number(hotel.stars || 0);
+            if (stars.length > 0 && !stars.includes(hotelStars)) return false;
+            
+            // Robust check for type
+            const hotelType = hotel.type || "";
+            if (type.length > 0 && !type.includes(hotelType)) return false;
+            
+            // Robust check for amenities
+            const hotelAmenities = Array.isArray(hotel.amenities) ? hotel.amenities : [];
+            if (amenities.length > 0 && !amenities.every(a => hotelAmenities.includes(a))) return false;
+            
+            return true;
         })
 
         if (filteredHotels.length === 0 && !destination && minPrice === 0) {
