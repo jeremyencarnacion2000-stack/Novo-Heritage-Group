@@ -16,7 +16,7 @@ export function MobileHeader({
   isIntroFinished = true
 }: MobileHeaderProps) {
   return (
-    <header className={`sticky top-4 z-[9999] mx-4 flex w-auto flex-row items-center justify-between rounded-none bg-background/60 backdrop-blur-xl border border-primary/20 shadow-premium md:hidden px-5 py-3.5 transition-all duration-1000 ${!isIntroFinished ? "opacity-10 pointer-events-none blur-sm" : "opacity-100 blur-0"}`}>
+    <header className={`fixed top-0 left-0 right-0 z-[1000] flex w-full flex-row items-center justify-between rounded-none bg-background/80 backdrop-blur-xl border-b border-primary/10 shadow-premium md:hidden px-6 py-4 transition-all duration-1000 ${!isIntroFinished ? "opacity-10 pointer-events-none blur-sm" : "opacity-100 blur-0"}`}>
       <Link
         className="flex items-center justify-center gap-2 active:scale-95 transition-transform"
         href="/"

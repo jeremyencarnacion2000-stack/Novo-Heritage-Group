@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react"
 // @ts-ignore
-import { Plane, Calendar, MapPin, Users, Check, Sparkles, ArrowRight, ArrowLeft, Target, Mail, Download, Palmtree, Compass, Anchor, ChevronRight } from "lucide-react"
+import { Plane, Calendar, MapPin, Users, Check, Sparkles, ArrowRight, ArrowLeft, Target, Mail, Download, Palmtree, Compass, Anchor, ChevronRight, Landmark, Shield, Globe } from "lucide-react"
 
-type TravelType = 'resort' | 'experiencia' | 'yate' | 'corporativo'
+type TravelType = 'resort' | 'experiencia' | 'yate' | 'corporativo' | 'consular'
 
 interface TravelQuoteData {
   tipo: TravelType | null
@@ -59,6 +59,12 @@ const TRAVEL_FIELDS: Record<TravelType, TravelFormField[]> = {
     { id: 'evento', label: 'Tipo de Evento', type: 'select', options: ['Retiro Ejecutivo', 'Convención Anual', 'Incentivo de Ventas'] },
     { id: 'asistentes', label: 'Número de Ejecutivos', type: 'select', options: ['Menos de 20', '20 - 50', 'Más de 50'] },
     { id: 'amenidades', label: 'Amenidades Requeridas', type: 'select', options: ['Salones Privados + Golf', 'Yate Corporativo', 'All-Inclusive VIP'] },
+  ],
+  'consular': [
+    { id: 'pais', label: 'País de Interés', type: 'select', options: ['Estados Unidos', 'Europa / Schengen', 'Canadá', 'Reino Unido', 'Otro'] },
+    { id: 'servicio', label: 'Tipo de Servicio', type: 'select', options: ['Primera Vez', 'Renovación', 'Asesoría de Perfil', 'Creación de Cuenta / Citas'] },
+    { id: 'visa', label: 'Tipo de Visa', type: 'select', options: ['Turismo / B1/B2', 'Trabajo / Negocios', 'Estudios / F1', 'Residencia / Otros'] },
+    { id: 'urgencia', label: 'Disponibilidad requerida', type: 'select', options: ['Normal', 'Urgente / Emergencia'] },
   ]
 }
 
@@ -85,12 +91,13 @@ export function TravelQuoteForm({
 
   // Mock luxury pricing engine
   useEffect(() => {
-    if (quote.tipo && Object.keys(quote.datos).length > 2 && quote.plan) {
+    if (quote.tipo && Object.keys(quote.datos).length > 1 && quote.plan) {
       let base = 5000
       if (quote.tipo === 'yate') base = 8500
       if (quote.tipo === 'corporativo') base = 25000
       if (quote.tipo === 'experiencia') base = 3500
-      
+      if (quote.tipo === 'consular') base = 450 // Base for consular service
+
       const planMultiplier = TRAVEL_PLAN_TIERS.find(p => p.id === quote.plan)?.mult || 1;
       const finalTotal = base * planMultiplier;
       
@@ -115,7 +122,7 @@ export function TravelQuoteForm({
         name: quote.name,
         email: quote.email,
         phone: quote.phone,
-        message: `Solicitud de diseño de viaje: ${quote.tipo} - Plan ${quote.plan}`,
+        message: `Solicitud de diseño: ${quote.tipo} - Plan ${quote.plan}. País: ${quote.datos.pais || 'N/D'}`,
         source: "cotizador_viajes_premium",
         details: {
           ...quote.datos,
@@ -123,7 +130,6 @@ export function TravelQuoteForm({
           tipo: quote.tipo,
           presupuesto_estimado: quote.totalEstimado,
           deposito_requerido: quote.deposito,
-          // Propagate search context
           origin: quote.origin,
           destination: quote.destination,
           checkIn: quote.checkIn,
@@ -153,20 +159,6 @@ export function TravelQuoteForm({
   const handleDataChange = (id: string, value: string) => {
     setQuote(prev => {
       const newDatos = { ...prev.datos, [id]: value };
-      
-      // Auto-advance logic for Step 3
-      if (step === 3 && prev.tipo) {
-        const fields = TRAVEL_FIELDS[prev.tipo];
-        const fieldIndex = fields.findIndex(f => f.id === id);
-        const isLastField = fieldIndex === fields.length - 1;
-        const currentField = fields[fieldIndex];
-        
-        // If it's the last field and it's a select, auto-advance
-        if (isLastField && currentField.type === 'select' && value !== "") {
-          setTimeout(() => setStep(4), 600);
-        }
-      }
-      
       return { ...prev, datos: newDatos };
     });
   }
@@ -219,45 +211,33 @@ export function TravelQuoteForm({
 
   return (
     <div className="w-full bg-background text-foreground min-h-[60vh] flex flex-col relative overflow-hidden font-sans">
-      {/* Premium Background FX */}
       <div className="absolute top-0 right-[-100px] w-[600px] h-[600px] rounded-none bg-primary/5 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-100px] left-[-100px] w-[600px] h-[600px] rounded-none bg-primary/5 blur-[120px] pointer-events-none" />
 
-      {/* Header */}
       <div className="text-center mb-10 relative z-10">
         <h2 className="text-3xl md:text-4xl lg:text-5xl font-light font-serif mb-4 leading-tight px-4">
-          Diseño de <span className="italic text-primary">Experiencias</span>
+          Solicitud de <span className="italic text-primary">Servicios</span>
         </h2>
-        <p className="text-foreground/50 text-xs md:text-sm tracking-widest uppercase px-4">Concierge Patrimonial & Turismo</p>
+        <p className="text-foreground/50 text-xs md:text-sm tracking-widest uppercase px-4">Concierge & Asesoría Novo Heritage</p>
       </div>
 
-      {/* Steps Indicator */}
       <div className="flex justify-center items-center gap-2 md:gap-4 mb-12 relative z-10 w-full overflow-x-auto px-4 pb-4 scrollbar-hide">
         {renderStepIcon(1, 'Categoría')}
         <div className={`w-6 md:w-12 h-[1px] ${step > 1 ? 'bg-primary' : 'bg-foreground/10'} transition-colors duration-500`} />
-        {renderStepIcon(2, 'Plan')}
+        {renderStepIcon(2, 'Prioridad')}
         <div className={`w-6 md:w-12 h-[1px] ${step > 2 ? 'bg-primary' : 'bg-foreground/10'} transition-colors duration-500`} />
-        {renderStepIcon(3, 'Itinerario')}
+        {renderStepIcon(3, 'Detalles')}
         <div className={`w-6 md:w-12 h-[1px] ${step > 3 ? 'bg-primary' : 'bg-foreground/10'} transition-colors duration-500`} />
-        {renderStepIcon(4, 'Presupuesto')}
+        {renderStepIcon(4, 'Contacto')}
       </div>
 
       {/* Step 1: Type Selection */}
       <div className={`transition-all duration-700 relative z-10 ${step === 1 ? 'opacity-100 translate-x-0' : 'hidden'}`}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <TravelCard id="consular" icon={Landmark} title="Asesoría Consular" desc="Gestión de visas USA, Schengen y otros trámites legales" />
           <TravelCard id="resort" icon={Palmtree} title="Resorts & Villas" desc="Alojamiento de élite en las zonas más exclusivas" />
+          <TravelCard id="experiencia" icon={Compass} title="Viajes de Autor" desc="Tours privados personalizados por especialistas" />
           <TravelCard id="yate" icon={Anchor} title="Chárter Náutico" desc="Yates privados con tripulación 5 estrellas" />
-          <TravelCard id="experiencia" icon={Compass} title="Experiencias VIP" desc="Tours privados personalizados por especialistas" />
-          <TravelCard id="corporativo" icon={Plane} title="Retiros Ejecutivos" desc="Logística integral para operaciones corporativas" />
-        </div>
-        <div className="mt-10 flex justify-end">
-          <button 
-            disabled={!quote.tipo}
-            onClick={() => setStep(2)}
-            className="flex items-center gap-4 px-8 py-3 bg-primary text-black font-bold uppercase tracking-[0.2em] text-xs hover:shadow-[0_0_20px_rgba(230,193,90,0.3)] disabled:opacity-50 transition-all hover:translate-x-1 rounded-none"
-          >
-            Continuar <ArrowRight className="w-4 h-4" />
-          </button>
         </div>
       </div>
 
@@ -269,49 +249,34 @@ export function TravelQuoteForm({
           ))}
         </div>
         <div className="mt-12 flex justify-between">
-          <button 
-            onClick={() => setStep(1)}
-            className="flex items-center gap-4 px-8 py-3 border border-primary/20 text-foreground/60 font-bold uppercase tracking-[0.2em] text-xs hover:text-primary transition-all rounded-none"
-          >
-            <ArrowLeft className="w-4 h-4" /> Volver
-          </button>
-          <button 
-            disabled={!quote.plan}
-            onClick={() => setStep(3)}
-            className="flex items-center gap-4 px-8 py-3 bg-primary text-black font-bold uppercase tracking-[0.2em] text-xs hover:shadow-[0_0_20px_rgba(230,193,90,0.3)] disabled:opacity-50 transition-all hover:translate-x-1 rounded-none"
-          >
-            Continuar <ArrowRight className="w-4 h-4" />
-          </button>
+          <button onClick={() => setStep(1)} className="px-8 py-3 border border-primary/20 text-foreground/60 text-xs uppercase tracking-widest font-bold">Volver</button>
         </div>
       </div>
 
       {/* Step 3: Details */}
       <div className={`transition-all duration-1000 relative z-10 ${step === 3 ? 'opacity-100 translate-x-0' : 'hidden translate-x-10'}`}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10 bg-background/80 p-10 md:p-16 border border-primary/10 shadow-premium">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10 bg-background/80 p-8 border border-primary/10 shadow-premium">
           {quote.tipo && TRAVEL_FIELDS[quote.tipo].map((field) => (
             <div key={field.id} className="flex flex-col gap-4">
               <label className="text-xs font-black uppercase tracking-[0.4em] text-primary/60">{field.label}</label>
               {field.type === 'select' ? (
                 <div className="relative group">
                   <select 
-                    className="w-full bg-background/80 border border-primary/10 p-6 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all appearance-none cursor-pointer font-bold tracking-widest"
+                    className="w-full bg-background/80 border border-primary/10 p-5 text-xs text-foreground focus:border-primary focus:outline-none appearance-none cursor-pointer font-bold tracking-widest"
                     onChange={(e) => handleDataChange(field.id, e.target.value)}
                     value={quote.datos[field.id] || ""}
                   >
-                    <option value="" disabled className="bg-background text-foreground/30">Seleccionar Opción...</option>
+                    <option value="" disabled>Seleccionar...</option>
                     {field.options?.map(opt => (
-                      <option key={opt} value={opt} className="bg-background text-foreground">{opt}</option>
+                      <option key={opt} value={opt}>{opt}</option>
                     ))}
                   </select>
-                  <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-primary/40 group-hover:text-primary transition-colors">
-                    <ChevronRight className="w-4 h-4 rotate-90" />
-                  </div>
+                  <ChevronRight className="absolute right-6 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/40 pointer-events-none rotate-90" />
                 </div>
               ) : (
                 <input 
                   type={field.type}
-                  className="w-full bg-background/80 border border-primary/10 p-6 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30 transition-all placeholder:text-foreground/10 font-bold tracking-widest"
-                  placeholder={`Defina su ${field.label.toLowerCase()}`}
+                  className="w-full bg-background/80 border border-primary/10 p-5 text-xs text-foreground focus:border-primary focus:outline-none"
                   onChange={(e) => handleDataChange(field.id, e.target.value)}
                   value={quote.datos[field.id] || ""}
                 />
@@ -319,81 +284,77 @@ export function TravelQuoteForm({
             </div>
           ))}
         </div>
-        
-        {/* Step Navigation Details */}
         <div className="mt-12 flex justify-between">
-          <button 
-            onClick={() => setStep(2)}
-            className="flex items-center gap-4 px-8 py-3 border border-primary/20 text-foreground/60 font-bold uppercase tracking-[0.2em] text-xs hover:text-primary transition-all rounded-none"
-          >
-            <ArrowLeft className="w-4 h-4" /> Atrás
-          </button>
-          <button 
-            disabled={Object.keys(quote.datos).length === 0}
-            onClick={() => setStep(4)}
-            className="flex items-center gap-4 px-8 py-3 bg-primary text-black font-bold uppercase tracking-[0.2em] text-xs hover:shadow-[0_0_20px_rgba(230,193,90,0.3)] disabled:opacity-50 transition-all hover:translate-x-1 rounded-none"
-          >
-            Ver Propuesta <Check className="w-4 h-4" />
-          </button>
+          <button onClick={() => setStep(2)} className="px-8 py-3 border border-primary/20 text-foreground/60 text-xs">Atrás</button>
+          <button onClick={() => setStep(4)} className="px-10 py-3 bg-primary text-black font-bold uppercase tracking-widest text-xs">Continuar</button>
         </div>
       </div>
 
-      {/* Step 4: Result */}
+      {/* Step 4: Contact & Submission */}
       <div className={`transition-all duration-700 relative z-10 ${step === 4 ? 'opacity-100 translate-x-0' : 'hidden translate-x-10'}`}>
-        <div className="text-center mb-8">
-          <Sparkles className="w-8 h-8 text-primary mx-auto mb-4" />
-          <h3 className="text-3xl font-serif text-primary">Propuesta {TRAVEL_PLAN_TIERS.find(p => p.id === quote.plan)?.title || 'Generada'}</h3>
-          <p className="text-xs text-foreground/50 tracking-widest uppercase mt-2">Valores Exclusivos para Clientes VIP</p>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-8">
-          <div className="p-8 border border-primary/20 bg-background/80 shadow-premium">
-            <h4 className="text-xs uppercase tracking-[0.4em] text-foreground/40 mb-6">Presupuesto Referencial</h4>
-            <div className="flex items-baseline gap-2 mb-2">
-              <span className="text-2xl text-foreground/50">$</span>
-              <span className="text-5xl font-serif text-primary">{quote.totalEstimado.toLocaleString()}</span>
-              <span className="text-xs text-foreground/40 uppercase tracking-widest">USD Estimado</span>
+        <div className="max-w-2xl mx-auto space-y-8 bg-background/80 p-10 border border-primary/10 shadow-premium">
+            <div className="text-center mb-10">
+               <Shield className="w-10 h-10 text-primary mx-auto mb-4" />
+               <h3 className="text-2xl font-serif">Datos de Contacto</h3>
+               <p className="text-foreground/40 text-xs uppercase tracking-widest mt-2">Seguridad y Confidencialidad Novo Heritage</p>
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-sm text-foreground/50">Reserva con</span>
-              <span className="text-xl font-serif text-foreground">${quote.deposito.toLocaleString()}</span>
-              <span className="text-xs text-foreground/40 uppercase tracking-widest">(30%)</span>
+            <div className="space-y-6">
+               <div className="space-y-3">
+                  <label className="text-[10px] uppercase tracking-widest font-black text-primary/60">Nombre Completo</label>
+                  <input 
+                    type="text" 
+                    className="w-full bg-background/50 border border-primary/10 p-5 text-xs focus:border-primary outline-none" 
+                    placeholder="Ej. Juan Pérez"
+                    value={quote.name}
+                    onChange={(e) => setQuote(prev => ({...prev, name: e.target.value}))}
+                  />
+               </div>
+               <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                     <label className="text-[10px] uppercase tracking-widest font-black text-primary/60">Correo Electrónico</label>
+                     <input 
+                        type="email" 
+                        className="w-full bg-background/50 border border-primary/10 p-5 text-xs focus:border-primary outline-none" 
+                        placeholder="juan@ejemplo.com"
+                        value={quote.email}
+                        onChange={(e) => setQuote(prev => ({...prev, email: e.target.value}))}
+                     />
+                  </div>
+                  <div className="space-y-3">
+                     <label className="text-[10px] uppercase tracking-widest font-black text-primary/60">Teléfono / WhatsApp</label>
+                     <input 
+                        type="tel" 
+                        className="w-full bg-background/50 border border-primary/10 p-5 text-xs focus:border-primary outline-none" 
+                        placeholder="+1 809..."
+                        value={quote.phone}
+                        onChange={(e) => setQuote(prev => ({...prev, phone: e.target.value}))}
+                     />
+                  </div>
+               </div>
             </div>
-            
-            <div className="h-[1px] bg-primary/10 w-full my-6" />
-            
-            <ul className="space-y-4">
-              <li className="flex items-center gap-3 text-xs text-foreground/60"><Check className="w-4 h-4 text-primary" /> {quote.plan === 'platinum' ? 'Lifestyle Manager Personal 24/7' : 'Asesor de viajes dedicado'}</li>
-              <li className="flex items-center gap-3 text-xs text-foreground/60"><Check className="w-4 h-4 text-primary" /> Acceso prioritario a amenidades VIP</li>
-              <li className="flex items-center gap-3 text-xs text-foreground/60"><Check className="w-4 h-4 text-primary" /> Garantía de Satisfacción Novo Heritage</li>
-            </ul>
-          </div>
-
-          <div className="flex flex-col gap-4 justify-center">
-            <button className="flex items-center justify-between p-4 border border-primary/20 hover:bg-primary/5 transition-colors group rounded-none bg-background/50">
-              <span className="text-xs uppercase tracking-widest font-bold">Contactar Lifestyle Manager</span>
-              <Target className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
+            <button 
+               onClick={handleSubmit} 
+               disabled={isSubmitting}
+               className="w-full mt-10 py-6 bg-primary text-black font-black uppercase tracking-[0.4em] text-xs hover:shadow-[0_0_30px_rgba(230,193,90,0.4)] transition-all flex items-center justify-center gap-4"
+            >
+               {isSubmitting ? 'Procesando...' : 'Solicitar Asesoría VIP'} <ArrowRight className="w-4 h-4" />
             </button>
-            <button className="flex items-center justify-between p-4 border border-primary/20 hover:bg-primary/5 transition-colors group rounded-none bg-background/50">
-              <span className="text-xs uppercase tracking-widest font-bold">Enviar Paquete Detallado al Correo</span>
-              <Mail className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
-            </button>
-            <button className="flex items-center justify-between p-4 border border-primary/20 hover:bg-primary/5 transition-colors group rounded-none bg-background/50">
-              <span className="text-xs uppercase tracking-widest font-bold">Descargar Itinerario Referencial</span>
-              <Download className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-12 flex justify-start">
-          <button 
-            onClick={() => setStep(1)}
-            className="flex items-center gap-4 px-8 py-3 border border-primary/20 text-foreground/60 font-bold uppercase tracking-[0.2em] text-xs hover:text-primary transition-all rounded-none"
-          >
-            <ArrowLeft className="w-4 h-4" /> Diseñar Nuevo Viaje
-          </button>
         </div>
       </div>
+
+      {/* Step 5: Success */}
+      {step === 5 && (
+        <div className="flex flex-col items-center justify-center text-center p-20 animate-fade-in">
+           <div className="w-24 h-24 bg-primary/10 flex items-center justify-center mb-10">
+              <Check className="w-12 h-12 text-primary" />
+           </div>
+           <h3 className="text-4xl font-serif text-primary mb-6">Solicitud Recibida</h3>
+           <p className="text-foreground/50 max-w-lg mx-auto font-light leading-relaxed">
+              Un Lifestyle Manager de Novo Heritage se pondrá en contacto con usted en las próximas 24 horas para dar inicio a su proceso personalizado.
+           </p>
+           <button onClick={() => setStep(1)} className="mt-12 text-xs font-bold uppercase tracking-widest text-primary hover:underline">Diseñar otra solicitud</button>
+        </div>
+      )}
     </div>
   )
 }

@@ -13,6 +13,7 @@ import { Header } from "@/components/header"
 import { MobileHeader } from "@/components/mobile-header"
 import { Footer } from "@/components/footer"
 import Chatbot from "@/components/chatbot"
+import { SidebarNav } from "./sidebar-nav"
 import PropertyDetailModal from "@/components/property-detail-modal"
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -70,6 +71,7 @@ export default function BienesRaicesClientPage() {
   const [properties, setProperties] = useState<any[]>([])
   const [isLoadingProps, setIsLoadingProps] = useState<boolean>(true)
   const [activeScene, setActiveScene] = useState<'hero' | 'gallery'>('hero')
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   
   const [services, setServices] = useState<any[]>([
     {
@@ -142,11 +144,14 @@ export default function BienesRaicesClientPage() {
     <div className="min-h-screen w-full relative bg-background text-foreground selection:bg-primary/30 overflow-x-hidden font-sans">
       <Header isScrolled={isScrolled} isIntroFinished={true} />
       <MobileHeader
-        isMobileMenuOpen={false}
-        setIsMobileMenuOpen={() => { }}
-        handleMobileNavClick={() => { }}
+        isMobileMenuOpen={isSidebarOpen}
+        setIsMobileMenuOpen={setIsSidebarOpen}
+        handleMobileNavClick={(section) => {
+          setIsSidebarOpen(false)
+        }}
         isIntroFinished={true}
       />
+      <SidebarNav isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -201,7 +206,7 @@ export default function BienesRaicesClientPage() {
                     Consultar Inversión
                   </button>
                 </DialogTrigger>
-                <DialogContent className="max-w-6xl w-full p-0 bg-transparent border-none overflow-y-auto max-h-[95vh] z-[1001]">
+                <DialogContent className="max-w-6xl w-full p-0 bg-transparent border-none overflow-y-auto max-h-[95vh]">
                   <DialogTitle className="sr-only">Consultar Inversión Inmobiliaria</DialogTitle>
                   <DialogDescription className="sr-only">Formulario para consultar opciones de inversión en bienes raíces</DialogDescription>
                   <div className="bg-background rounded-none p-10 md:p-20 shadow-2xl border border-primary/20 relative">

@@ -11,6 +11,7 @@ import { ArrowRight, CheckCircle2, Clock, Shield, Car, Plane, Heart, Star, Chevr
 import Chatbot from "@/components/chatbot"
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { InsuranceQuoteForm } from "@/components/forms/insurance-quote-form"
+import { SidebarNav } from "./sidebar-nav"
 import { BookingForms } from "@/components/booking-forms"
 
 const insuranceTypes = [
@@ -77,6 +78,7 @@ const vehiclePlans = [
 
 export default function SegurosClientPage() {
   const [isScrolled, setIsScrolled] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const heroRef = useRef<HTMLDivElement>(null)
 
   // Framer Motion Scroll Hooks
@@ -95,11 +97,14 @@ export default function SegurosClientPage() {
     <div className="min-h-screen w-full relative bg-background text-foreground selection:bg-primary/30 overflow-x-hidden font-sans">
       <Header isScrolled={isScrolled} isIntroFinished={true} />
       <MobileHeader
-        isMobileMenuOpen={false}
-        setIsMobileMenuOpen={() => { }}
-        handleMobileNavClick={() => { }}
+        isMobileMenuOpen={isSidebarOpen}
+        setIsMobileMenuOpen={setIsSidebarOpen}
+        handleMobileNavClick={(section) => {
+          setIsSidebarOpen(false)
+        }}
         isIntroFinished={true}
       />
+      <SidebarNav isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       {/* Dynamic Background Accents */}
       <div className="fixed inset-0 z-0 pointer-events-none">
@@ -154,7 +159,7 @@ export default function SegurosClientPage() {
                       <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-6xl w-full p-0 bg-transparent border-none overflow-y-auto max-h-[95vh] z-[1001]">
+                  <DialogContent className="max-w-6xl w-full p-0 bg-transparent border-none overflow-y-auto max-h-[95vh]">
                     <DialogTitle className="sr-only">Cotizador de Seguros</DialogTitle>
                     <DialogDescription className="sr-only">Formulario de cotización de seguros patrimoniales Novo Heritage</DialogDescription>
                     <div className="bg-background rounded-none p-10 md:p-20 shadow-2xl border border-primary/20 relative">
@@ -368,7 +373,7 @@ export default function SegurosClientPage() {
                     <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </button>
                 </DialogTrigger>
-                <DialogContent className="max-w-6xl w-full p-0 bg-transparent border-none overflow-y-auto max-h-[95vh] z-[1001]">
+                <DialogContent className="max-w-6xl w-full p-0 bg-transparent border-none overflow-y-auto max-h-[95vh]">
                   <DialogTitle className="sr-only">Agendar Cita Private</DialogTitle>
                   <DialogDescription className="sr-only">Formulario de reserva de cita con asesor de seguros Novo Heritage</DialogDescription>
                   <div className="bg-background rounded-none p-10 md:p-20 shadow-2xl border border-primary/20 relative">

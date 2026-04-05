@@ -186,3 +186,7 @@ html.lenis {
 .lenis.lenis-stopped {
   overflow: hidden;
 }
+
+.scroll-lock {
+  overflow: hidden !important;
+}

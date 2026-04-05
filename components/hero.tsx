@@ -57,7 +57,7 @@ export function Hero({ introFinished, onIntroComplete }: HeroProps) {
              transform: "translateZ(0)",
              WebkitFontSmoothing: "antialiased"
           }}
-          className={`h-full w-full object-cover transition-opacity duration-1500 ease-out ${videoLoaded ? "opacity-100" : "opacity-0"}`}
+          className={`h-full w-full object-cover object-center transition-opacity duration-1500 ease-out ${videoLoaded ? "opacity-100" : "opacity-0"}`}
         />
         
         {/* Subtle Overlay to match UI colors */}
@@ -74,9 +74,9 @@ export function Hero({ introFinished, onIntroComplete }: HeroProps) {
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5, duration: 1, ease: "easeOut" }}
-                className="absolute top-32 left-4 md:left-8 pointer-events-auto"
+                className="absolute top-32 md:top-40 left-6 md:left-8 pointer-events-auto"
               >
-                <p className="premium-label mb-3">
+                <p className="premium-label mb-3 text-[10px] md:text-xs">
                   Arquitectura & Estilo
                 </p>
                 <div className="w-16 h-[0.5px] bg-primary/60" />
@@ -87,11 +87,11 @@ export function Hero({ introFinished, onIntroComplete }: HeroProps) {
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.8, duration: 1, ease: "easeOut" }}
-                className="absolute bottom-40 left-4 md:left-8 pointer-events-auto"
+                className="absolute bottom-48 md:bottom-40 left-6 md:left-8 pointer-events-auto w-[calc(100%-3rem)] md:w-auto"
               >
                 <Magnetic strength={0.15}>
-                   <button className="group relative flex items-center justify-between gap-16 px-12 py-6 bg-primary text-black transition-all duration-700 hover:scale-[1.02] rounded-none shadow-premium overflow-hidden border border-primary/20">
-                      <span className="text-xs font-bold uppercase tracking-[0.3em] font-sans z-10">Explorar Destinos</span>
+                   <button className="group relative flex items-center justify-between gap-10 md:gap-16 px-10 md:px-12 py-5 md:py-6 bg-primary text-black transition-all duration-700 hover:scale-[1.02] rounded-none shadow-premium overflow-hidden border border-primary/20 w-full md:w-auto">
+                      <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] md:tracking-[0.3em] font-sans z-10">Explorar Destinos</span>
                       <ArrowUpRight className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform z-10" />
                       <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                       <div className="absolute -inset-[100%] bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
@@ -104,7 +104,7 @@ export function Hero({ introFinished, onIntroComplete }: HeroProps) {
                 initial={{ opacity: 0, x: 40 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 1.1, duration: 1, ease: "easeOut" }}
-                className="absolute bottom-40 right-4 md:right-8 flex flex-col items-end gap-5 pointer-events-auto"
+                className="absolute bottom-24 md:bottom-40 right-6 md:right-8 flex flex-row md:flex-col items-center md:items-end gap-3 md:gap-5 pointer-events-auto"
               >
                 {[
                   { label: "LUXURY", delay: 0 },
@@ -116,7 +116,7 @@ export function Hero({ introFinished, onIntroComplete }: HeroProps) {
                     initial={{ opacity: 0, x: 30 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 1.4 + chip.delay, duration: 0.8 }}
-                    className="px-10 py-3 glass-architectural text-[10px] font-bold uppercase tracking-[0.4em] text-foreground/90 border-b-primary/60 font-sans hover:bg-primary/5 transition-colors cursor-default"
+                    className="px-6 md:px-10 py-2.5 md:py-3 glass-architectural text-[8px] md:text-[10px] font-bold uppercase tracking-[0.2em] md:tracking-[0.4em] text-foreground/90 border-b-primary/60 font-sans hover:bg-primary/5 transition-colors cursor-default whitespace-nowrap"
                   >
                     {chip.label}
                   </motion.span>
