@@ -53,7 +53,7 @@ export const metadata: Metadata = {
     images: ['/Novo Heritage Group.jpg'],
   },
   icons: {
-    icon: '/favicon.ico',
+    icon: '/Icono.png',
   }
 }
 

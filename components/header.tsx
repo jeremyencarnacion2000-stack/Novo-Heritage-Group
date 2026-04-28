@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 // @ts-ignore - lucide-react types not resolving correctly
-import { Settings, Menu, LogOut, User } from "lucide-react"
+import { Settings, Menu, LogOut, User, ShieldCheck } from "lucide-react"
 import { Logo } from "@/components/logo"
 import Link from "next/link"
 import {
@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useRouter } from "next/navigation"
-
+import { supabase } from "@/lib/supabase"
 import { ThemeToggle } from "@/components/theme-toggle"
 
 interface HeaderProps {
@@ -25,39 +25,34 @@ interface HeaderProps {
 }
 
 export function Header({ isScrolled, onMenuClick, isIntroFinished = true }: HeaderProps) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [userRole, setUserRole] = useState<string | null>(null)
-  const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [user, setUser] = useState<any>(null)
   const router = useRouter()
 
   useEffect(() => {
-    const role = localStorage.getItem('userRole')
-    const email = localStorage.getItem('userEmail')
-    if (role) {
-      setIsLoggedIn(true)
-      setUserRole(role)
-      setUserEmail(email)
-    }
-    const handleStorageChange = () => {
-      const newRole = localStorage.getItem('userRole')
-      const newEmail = localStorage.getItem('userEmail')
-      setIsLoggedIn(!!newRole)
-      setUserRole(newRole)
-      setUserEmail(newEmail)
-    }
-    window.addEventListener('storage', handleStorageChange)
-    return () => window.removeEventListener('storage', handleStorageChange)
-  }, [])
+    // 1. Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+    })
 
-  const handleLogout = () => {
-    localStorage.removeItem('userRole')
-    localStorage.removeItem('userEmail')
-    setIsLoggedIn(false)
-    setUserRole(null)
-    setUserEmail(null)
+    // 2. Listen for auth changes (Google Sign In, Sign Out, etc.)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+      if (_event === 'SIGNED_IN') router.refresh()
+    })
+
+    return () => subscription.unsubscribe()
+  }, [router])
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    setUser(null)
     router.push('/')
     router.refresh()
   }
+
+  const userEmail = user?.email
+  const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || userEmail?.split('@')[0]
+  const userAvatar = user?.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userEmail || 'User'}`
 
   return (
     <header
@@ -69,7 +64,7 @@ export function Header({ isScrolled, onMenuClick, isIntroFinished = true }: Head
     >
       <div className="flex items-center gap-12">
         <Link href="/" className="transition-transform hover:scale-[1.02] flex-shrink-0">
-          <Logo className="transition-all duration-500 brightness-0 invert h-10 w-auto min-w-[140px]" />
+          <Logo className="transition-all duration-500 brightness-0 invert h-12 w-auto min-w-[160px]" />
         </Link>
 
         <nav className={`flex items-center gap-8 border-l pl-8 h-8 transition-colors duration-500 ${isScrolled ? "border-white/20" : "border-foreground/10"}`}>
@@ -91,12 +86,11 @@ export function Header({ isScrolled, onMenuClick, isIntroFinished = true }: Head
       </div>
 
       <div className="flex items-center gap-4">
-        {/* Theme Toggle integrated into the main header */}
         <div className="hidden md:flex items-center gap-2 pr-4 border-r border-foreground/10">
            <ThemeToggle />
         </div>
 
-        {!isLoggedIn ? (
+        {!user ? (
           <div className="flex items-center gap-6 pl-2">
             <Link
               href="/login"
@@ -117,37 +111,43 @@ export function Header({ isScrolled, onMenuClick, isIntroFinished = true }: Head
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity focus:outline-none">
-                  <Avatar className="h-10 w-10 border-2 border-primary/20">
-                    <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userEmail || 'User'}`} />
+                  <div className="flex flex-col items-end mr-3">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white leading-none mb-1">{userName}</span>
+                    <span className="text-[8px] uppercase tracking-tighter text-primary flex items-center gap-1">
+                      <ShieldCheck className="w-2 h-2" /> Miembro Heritage
+                    </span>
+                  </div>
+                  <Avatar className="h-10 w-10 border-2 border-primary/20 p-0.5 bg-black/40">
+                    <AvatarImage src={userAvatar} className="rounded-full object-cover" />
                     <AvatarFallback className="bg-primary/10 text-primary">
-                      {userEmail ? userEmail.charAt(0).toUpperCase() : 'U'}
+                      {userName?.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64 glass-premium p-2 mt-4 rounded-none">
+              <DropdownMenuContent align="end" className="w-64 glass-premium p-2 mt-4 rounded-none border-primary/10">
                 <DropdownMenuLabel className="pb-4">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-xs font-black uppercase tracking-widest leading-none">
-                      {userEmail ? userEmail.split('@')[0] : 'Usuario'}
+                    <p className="text-xs font-black uppercase tracking-widest leading-none text-white">
+                      {userName}
                     </p>
                     <p className="text-[10px] leading-none text-foreground/40 truncate">
                       {userEmail}
                     </p>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-foreground/5" />
-                <DropdownMenuItem asChild className="p-3 cursor-pointer hover:bg-foreground/5 transition-colors">
+                <DropdownMenuSeparator className="bg-foreground/10" />
+                <DropdownMenuItem asChild className="p-3 cursor-pointer hover:bg-white/5 transition-colors">
                   <Link href="/settings" className="flex items-center gap-3 w-full">
                     <User className="h-4 w-4 text-primary" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Mi Perfil</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white/70">Panel de Control</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-foreground/5" />
-                <DropdownMenuItem onClick={handleLogout} className="p-3 cursor-pointer text-red-600 hover:bg-red-500/10 transition-colors">
+                <DropdownMenuSeparator className="bg-foreground/10" />
+                <DropdownMenuItem onClick={handleLogout} className="p-3 cursor-pointer text-red-400 hover:bg-red-500/10 transition-colors">
                   <div className="flex items-center gap-3 w-full">
                     <LogOut className="h-4 w-4" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Cerrar Sesión</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">Cerrar Sesión Segura</span>
                   </div>
                 </DropdownMenuItem>
               </DropdownMenuContent>

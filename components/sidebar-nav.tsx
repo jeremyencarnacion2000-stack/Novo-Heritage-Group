@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { X, Home, Shield, Building2, Plane, MessageSquare, Info, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { Logo } from "@/components/logo"
 
 interface SidebarNavProps {
     isOpen: boolean
@@ -66,10 +67,9 @@ export function SidebarNav({ isOpen, onClose }: SidebarNavProps) {
                         {/* Header */}
                         <div className="p-8 flex items-center justify-between border-b border-border">
                             <div className="flex flex-col">
-                                <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-amber-400/60 mb-1">
-                                    Novo Heritage
+                                <span className="mb-2">
+                                    <Logo className="h-8 w-auto brightness-0 invert" />
                                 </span>
-                                <span className="text-xl font-serif text-foreground">Menú</span>
                             </div>
                             <button
                                 onClick={onClose}

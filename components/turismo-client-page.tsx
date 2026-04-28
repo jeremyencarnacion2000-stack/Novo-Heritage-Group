@@ -18,6 +18,7 @@ import Chatbot from "@/components/chatbot"
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { TravelQuoteForm } from "@/components/forms/travel-quote-form"
 import { TrivagoSearch } from "@/components/trivago-search"
+import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { SidebarNav } from "./sidebar-nav"
 import { PremiumHeading, PremiumText } from "@/components/premium-typography"
@@ -118,6 +119,22 @@ export default function TurismoClientPage() {
         isIntroFinished={true}
       />
       <SidebarNav isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      
+      {/* Dynamic Background Accents */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] rounded-none bg-primary/5 blur-[120px]" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] rounded-none bg-primary/5 blur-[120px]" />
+        
+        {/* Section Watermark */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[800px] aspect-square opacity-[0.03] grayscale brightness-0 invert pointer-events-none select-none overflow-hidden">
+          <Image
+            src="/Turismos.svg"
+            alt=""
+            fill
+            className="object-contain scale-150 rotate-[-15deg]"
+          />
+        </div>
+      </div>
 
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center justify-center pt-32 pb-20 overflow-hidden">
@@ -210,13 +227,13 @@ export default function TurismoClientPage() {
                   ))}
                 </div>
 
-                <Dialog>
+                <Dialog modal={true}>
                   <DialogTrigger asChild>
                     <button className="btn-premium w-full py-5 text-[10px] tracking-[0.3em]">
                       Solicitar Consulta
                     </button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-4xl p-0 bg-transparent border-none overflow-y-auto max-h-[95vh]">
+                  <DialogContent className="max-w-4xl p-0 bg-transparent border-none overflow-y-auto max-h-[92vh] outline-none">
                     <div className="bg-background p-10 md:p-16 border border-primary/20 shadow-2xl">
                       <TravelQuoteForm 
                         defaultType="consular"
@@ -240,11 +257,11 @@ export default function TurismoClientPage() {
           <PremiumText className="text-[10px] uppercase tracking-[0.5em] text-foreground/30 mb-12">Alianzas Estratégicas Globales</PremiumText>
           <div className="flex flex-wrap justify-center items-center gap-16 md:gap-32 opacity-40 grayscale group hover:grayscale-0 transition-all duration-1000">
              <div className="flex flex-col items-center gap-4">
-                <landmark className="w-40 h-10 flex items-center justify-center text-3xl font-black tracking-tighter italic">trivago</landmark>
+                <div className="w-40 h-10 flex items-center justify-center text-3xl font-black tracking-tighter italic">trivago</div>
                 <span className="text-[8px] uppercase tracking-widest text-foreground/40 font-bold">Reserva de Hoteles</span>
              </div>
              <div className="flex flex-col items-center gap-4">
-                <landmark className="w-40 h-10 flex items-center justify-center text-3xl font-black tracking-widest uppercase">CheapOair</landmark>
+                <div className="w-40 h-10 flex items-center justify-center text-3xl font-black tracking-widest uppercase">CheapOair</div>
                 <span className="text-[8px] uppercase tracking-widest text-foreground/40 font-bold">Vuelos Internacionales</span>
              </div>
           </div>

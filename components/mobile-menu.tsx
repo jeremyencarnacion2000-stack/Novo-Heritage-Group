@@ -27,7 +27,7 @@ export const MobileMenu = ({ className }: MobileMenuProps) => {
   }
 
   return (
-    <Dialog.Root modal={false} open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog.Root modal={true} open={isOpen} onOpenChange={setIsOpen}>
       <Dialog.Trigger asChild>
         <Button
           variant="ghost"
@@ -41,15 +41,10 @@ export const MobileMenu = ({ className }: MobileMenuProps) => {
       </Dialog.Trigger>
 
       <Dialog.Portal>
-        <div data-overlay="true" className="fixed z-30 inset-0 bg-background/60 backdrop-blur-xl animate-fade-in" />
+        <Dialog.Overlay className="fixed z-30 inset-0 bg-background/60 backdrop-blur-xl animate-fade-in pointer-events-auto touch-none" />
 
         <Dialog.Content
-          onInteractOutside={(e) => {
-            if (e.target instanceof HTMLElement && e.target.dataset.overlay !== "true") {
-              e.preventDefault()
-            }
-          }}
-          className="fixed top-0 left-0 w-full z-40 py-28 md:py-40"
+          className="fixed top-0 left-0 w-full h-full z-40 pt-28 pb-10 overflow-y-auto outline-none"
         >
           <Dialog.Title className="sr-only">Menu</Dialog.Title>
 

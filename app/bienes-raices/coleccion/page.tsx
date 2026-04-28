@@ -53,15 +53,15 @@ export default function ColeccionPage() {
         const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
             p.id.toLowerCase().includes(searchQuery.toLowerCase())
         const matchesPrice = p.price >= priceRange[0] && p.price <= priceRange[1]
-        const matchesType = propertyType === "all" || p.type === propertyType
+        const matchesType = propertyType === "all" || p.type?.toLowerCase() === propertyType.toLowerCase()
         const matchesTransaction = transactionType === "all" || p.transactionType === transactionType
-        const matchesCity = city === "all" || p.city === city
-        const matchesSector = sector === "all" || p.sector === sector
-        const matchesBedrooms = bedrooms === "any" || p.bedrooms === parseInt(bedrooms)
+        const matchesCity = city === "all" || p.city?.toLowerCase().includes(city.toLowerCase())
+        const matchesSector = sector === "all" || p.sector?.toLowerCase().includes(sector.toLowerCase())
+        const matchesBedrooms = bedrooms === "any" || p.bedrooms >= parseInt(bedrooms)
         const matchesBathrooms = bathrooms === "any" || p.bathrooms >= parseInt(bathrooms)
-        const matchesParking = parking === "any" || p.parking >= parseInt(parking)
+        const matchesParking = parking === "any" || (p.parking && p.parking >= parseInt(parking))
         const matchesCode = propertyCode === "" || p.id.toLowerCase().includes(propertyCode.toLowerCase())
-        const matchesAmenities = amenities.length === 0 || amenities.every(a => p.amenities?.includes(a))
+        const matchesAmenities = amenities.length === 0 || amenities.every(a => p.amenities?.some((feat: string) => feat.toLowerCase().includes(a.toLowerCase())))
 
         return matchesSearch && matchesPrice && matchesType && matchesTransaction &&
             matchesCity && matchesSector && matchesBedrooms && matchesBathrooms &&
@@ -129,9 +129,9 @@ export default function ColeccionPage() {
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="all">Todas</SelectItem>
-                                            <SelectItem value="sd">Santo Domingo</SelectItem>
-                                            <SelectItem value="pc">Punta Cana</SelectItem>
-                                            <SelectItem value="lr">La Romana</SelectItem>
+                                            <SelectItem value="santo domingo">Santo Domingo</SelectItem>
+                                            <SelectItem value="punta cana">Punta Cana</SelectItem>
+                                            <SelectItem value="la romana">La Romana</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -144,9 +144,9 @@ export default function ColeccionPage() {
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="all">Todos</SelectItem>
-                                            <SelectItem value="pi">Piantini</SelectItem>
-                                            <SelectItem value="na">Naco</SelectItem>
-                                            <SelectItem value="be">Bella Vista</SelectItem>
+                                            <SelectItem value="piantini">Piantini</SelectItem>
+                                            <SelectItem value="naco">Naco</SelectItem>
+                                            <SelectItem value="bella vista">Bella Vista</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>

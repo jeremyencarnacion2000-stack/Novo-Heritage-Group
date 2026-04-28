@@ -279,7 +279,7 @@ export default function PropertyDetailModal({ open, onOpenChange, property }: Pr
             {/* Precio y acciones */}
             <Card className="p-6">
               <div className="text-3xl font-bold text-foreground mb-4">
-                {typeof property.price === "number" ? `$${property.price.toLocaleString()}` : property.price}
+                {typeof property.price === "number" ? `$${property.price.toLocaleString('en-US')}` : property.price}
               </div>
 
               <div className="space-y-3">

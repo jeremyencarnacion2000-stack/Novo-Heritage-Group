@@ -15,6 +15,8 @@ import { Footer } from "@/components/footer"
 import Chatbot from "@/components/chatbot"
 import { SidebarNav } from "./sidebar-nav"
 import PropertyDetailModal from "@/components/property-detail-modal"
+import { trackBehavior } from "@/lib/tracking"
+import { supabase } from "@/lib/supabase"
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { PropertyCarousel } from "@/components/property-carousel"
@@ -97,10 +99,10 @@ export default function BienesRaicesClientPage() {
   ])
 
   const [collections, setCollections] = useState<any[]>([
-    { title: "Torre Naco", image: "/modern_minimalist_house_pushkino.png", subtitle: "Exclusividad Metropolitana", area: "250", floors: "1", bedrooms: "3" },
-    { title: "Villa Cap Cana", image: "/luxury_modern_villa_renaissance.png", subtitle: "Santuario Costero", area: "850", floors: "2", bedrooms: "5" },
-    { title: "Altos de Chavón", image: "/contemporary_house_barminka.png", subtitle: "Legado Arquitectónico", area: "450", floors: "2", bedrooms: "4" },
-    { title: "Piantini Luxury", image: "/elegant_modern_home_venice.png", subtitle: "Vistas Panorámicas", area: "320", floors: "1", bedrooms: "3" },
+    { id: "torre-naco", title: "Torre Naco", image: "/modern_minimalist_house_pushkino.png", subtitle: "Exclusividad Metropolitana", sector: "Naco", area: 250, bedrooms: 3, bathrooms: 3, price: 550000, description: "Lujosa torre en el corazón de Naco con acabados premium.", features: ["Seguridad 24/7", "Lobby", "Piscina"] },
+    { id: "villa-cap-cana", title: "Villa Cap Cana", image: "/luxury_modern_villa_renaissance.png", subtitle: "Santuario Costero", sector: "Cap Cana", area: 850, bedrooms: 5, bathrooms: 5, price: 2500000, description: "Villa frente al mar con diseño contemporáneo y vistas inigualables.", features: ["Playa Privada", "Cine", "Muelle"] },
+    { id: "altos-chavon", title: "Altos de Chavón", image: "/contemporary_house_barminka.png", subtitle: "Legado Arquitectónico", sector: "La Romana", area: 450, bedrooms: 4, bathrooms: 4, price: 1200000, description: "Residencia inspirada en la arquitectura clásica con toques modernos.", features: ["Campo de golf", "Seguridad VIP"] },
+    { id: "piantini-luxury", title: "Piantini Luxury", image: "/elegant_modern_home_venice.png", subtitle: "Vistas Panorámicas", sector: "Piantini", area: 320, bedrooms: 3, bathrooms: 3, price: 780000, description: "Apartamento de lujo con domótica integrada y vistas a toda la ciudad.", features: ["Gimnasio", "Social Area"] },
   ])
 
   useEffect(() => {
@@ -128,6 +130,17 @@ export default function BienesRaicesClientPage() {
     }
   }, [])
 
+  useEffect(() => {
+    if (activeScene === 'gallery') {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [activeScene])
+
   const { scrollY } = useScroll()
   const bgY = useTransform(scrollY, [0, 1000], [0, 300])
 
@@ -152,6 +165,22 @@ export default function BienesRaicesClientPage() {
         isIntroFinished={true}
       />
       <SidebarNav isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      
+      {/* Dynamic Background Accents */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] rounded-none bg-primary/5 blur-[120px]" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] rounded-none bg-primary/5 blur-[120px]" />
+        
+        {/* Section Watermark */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[800px] aspect-square opacity-[0.03] grayscale brightness-0 invert pointer-events-none select-none overflow-hidden">
+          <Image
+            src="/Realty.svg"
+            alt=""
+            fill
+            className="object-contain scale-150 rotate-[-15deg]"
+          />
+        </div>
+      </div>
 
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -200,13 +229,13 @@ export default function BienesRaicesClientPage() {
                 <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
               </button>
               
-              <Dialog>
+              <Dialog modal={true}>
                 <DialogTrigger asChild>
                   <button className="px-12 py-5 border border-primary/20 glass-premium text-xs font-bold uppercase tracking-[0.3em] hover:bg-primary/5 transition-all">
                     Consultar Inversión
                   </button>
                 </DialogTrigger>
-                <DialogContent className="max-w-6xl w-full p-0 bg-transparent border-none overflow-y-auto max-h-[95vh]">
+                <DialogContent className="max-w-6xl w-full p-0 bg-transparent border-none overflow-y-auto max-h-[92vh] outline-none">
                   <DialogTitle className="sr-only">Consultar Inversión Inmobiliaria</DialogTitle>
                   <DialogDescription className="sr-only">Formulario para consultar opciones de inversión en bienes raíces</DialogDescription>
                   <div className="bg-background rounded-none p-10 md:p-20 shadow-2xl border border-primary/20 relative">
@@ -217,53 +246,6 @@ export default function BienesRaicesClientPage() {
             </div>
           </motion.div>
         </div>
-
-        {/* Side Panel Overlay for 'Gallery' Scene */}
-        <AnimatePresence>
-          {activeScene === 'gallery' && (
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute right-0 top-0 w-full md:w-[40%] h-full glass-premium z-20 border-l border-primary/10 overflow-y-auto"
-            >
-              <div className="p-12 pt-32">
-                <div className="flex justify-between items-center mb-16">
-                  <h2 className="text-4xl font-light font-serif text-foreground">Selecciones VIP</h2>
-                  <button
-                    onClick={() => setActiveScene('hero')}
-                    className="p-3 border border-primary/20 hover:bg-primary hover:text-black transition-all"
-                  >
-                    <ArrowRight className="w-5 h-5 rotate-180" />
-                  </button>
-                </div>
-
-                <div className="grid gap-10">
-                  {collections.map((item: any, idx: number) => (
-                    <motion.div
-                      key={item.title}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.2 + idx * 0.1 }}
-                      className="group cursor-pointer flex gap-8 items-center p-6 border border-primary/5 hover:border-primary/20 hover:bg-primary/[0.02] transition-all duration-700"
-                      onClick={scrollToGallery}
-                    >
-                      <div className="relative w-24 h-24 overflow-hidden border border-primary/10">
-                        <Image src={item.image} alt={item.title} fill className="object-cover grayscale group-hover:grayscale-0 transition-all duration-1000" />
-                      </div>
-                      <div>
-                        <h4 className="text-xl font-serif text-foreground mb-1">{item.title}</h4>
-                        <p className="text-[10px] text-foreground/40 uppercase tracking-[0.2em]">{item.subtitle}</p>
-                      </div>
-                      <ArrowRight className="ml-auto w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0" />
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </section>
 
       {/* Featured Projects Grid */}
@@ -283,37 +265,64 @@ export default function BienesRaicesClientPage() {
           </div>
           
           <div className="grid grid-cols-12 gap-10">
-            {collections.map((collection, index) => (
-              <div key={collection.title} className="col-span-12 md:col-span-6">
+            {(properties.length > 0 ? properties.slice(0, 4) : collections).map((item, index) => (
+              <div key={item.id || item.title} className="col-span-12 md:col-span-6">
+                <Link href={item.id ? `/bienes-raices/propiedad/${item.id}` : "#"}>
                 <ParallaxCard
-                  image={collection.image}
-                  title={collection.title}
+                  image={item.image || "/placeholder.jpg"}
+                  title={item.title}
                   className="aspect-[4/3] border border-primary/5"
                 >
-                  <div className="absolute inset-0 flex flex-col justify-end p-12 bg-gradient-to-t from-black via-black/20 to-transparent">
+                  <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-12 bg-gradient-to-t from-black via-black/40 to-transparent">
                     <div className="z-10 group-hover:-translate-y-4 transition-transform duration-700">
-                      <p className="text-[10px] text-primary uppercase tracking-[0.4em] font-bold mb-3">{collection.subtitle}</p>
-                      <h3 className="text-4xl md:text-5xl font-light font-serif text-white mb-6 leading-tight">
-                        {collection.title}
+                      <p className="text-[10px] text-primary uppercase tracking-[0.4em] font-bold mb-3">{item.sector || item.subtitle || "Premium"}</p>
+                      <h3 className="text-3xl md:text-5xl font-light font-serif text-white mb-6 leading-tight line-clamp-2">
+                        {item.title}
                       </h3>
                       
                       <div className="flex gap-10 text-[10px] uppercase tracking-[0.2em] text-white/40 mb-8 border-t border-white/10 pt-6">
                         <div className="space-y-1">
                           <span className="block opacity-50">Área</span>
-                          <span className="text-white">{collection.area} m²</span>
+                          <span className="text-white">{item.area} m²</span>
                         </div>
                         <div className="space-y-1">
                           <span className="block opacity-50">Hab</span>
-                          <span className="text-white">{collection.bedrooms}</span>
+                          <span className="text-white">{item.bedrooms}</span>
                         </div>
                       </div>
 
-                      <button className="px-10 py-4 bg-transparent border border-white/20 text-white text-[10px] font-bold uppercase tracking-[0.3em] hover:bg-white hover:text-black transition-all">
+                      <button 
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setSelectedProperty(item);
+                          setIsDetailModalOpen(true);
+                          
+                          // Tracking behavioral data for AI profiling
+                          const { data: { user } } = await supabase.auth.getUser();
+                          if (user) {
+                            trackBehavior({
+                              usuario_id: user.id,
+                              evento: 'click',
+                              seccion: 'bienes-raices',
+                              metadata: {
+                                property_id: item.id,
+                                property_title: item.title,
+                                sector: item.sector,
+                                price: item.price,
+                                type: item.type
+                              }
+                            });
+                          }
+                        }}
+                        className="px-10 py-4 bg-transparent border border-white/20 text-white text-[10px] font-bold uppercase tracking-[0.3em] hover:bg-white hover:text-black transition-all"
+                      >
                         Ver Ficha Técnica
                       </button>
                     </div>
                   </div>
                 </ParallaxCard>
+                </Link>
               </div>
             ))}
           </div>
@@ -435,6 +444,63 @@ export default function BienesRaicesClientPage() {
         onOpenChange={setIsDetailModalOpen}
         property={selectedProperty}
       />
+
+      {/* Side Panel Overlay for 'Gallery' Scene - Moved out of the section to prevent z-index clipping */}
+      <AnimatePresence>
+        {activeScene === 'gallery' && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setActiveScene('hero')}
+              className="fixed inset-0 bg-background/60 backdrop-blur-sm z-[9998]"
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              className="fixed right-0 top-0 w-full md:w-[40%] h-[100vh] glass-premium z-[9999] border-l border-primary/10 overflow-y-auto"
+            >
+              <div className="p-12 pt-32">
+                <div className="flex justify-between items-center mb-16">
+                  <h2 className="text-4xl font-light font-serif text-foreground">Selecciones VIP</h2>
+                  <button
+                    onClick={() => setActiveScene('hero')}
+                    className="p-3 border border-primary/20 hover:bg-primary hover:text-black transition-all"
+                  >
+                    <ArrowRight className="w-5 h-5 rotate-180" />
+                  </button>
+                </div>
+
+                <div className="grid gap-10">
+                  {(properties.length > 0 ? properties.slice(0, 4) : collections).map((item: any, idx: number) => (
+                    <Link href={item.id ? `/bienes-raices/propiedad/${item.id}` : "#propiedades"} key={item.id || item.title} onClick={() => {if(!item.id) scrollToGallery()}}>
+                      <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.2 + idx * 0.1 }}
+                        className="group cursor-pointer flex gap-8 items-center p-6 border border-primary/5 hover:border-primary/20 hover:bg-primary/[0.02] transition-all duration-700"
+                      >
+                        <div className="relative w-24 h-24 overflow-hidden border border-primary/10 bg-muted">
+                          <Image src={item.image || "/placeholder.jpg"} alt={item.title} fill className="object-cover grayscale group-hover:grayscale-0 transition-all duration-1000" />
+                        </div>
+                        <div>
+                          <h4 className="text-xl font-serif text-foreground mb-1 line-clamp-1">{item.title}</h4>
+                          <p className="text-[10px] text-foreground/40 uppercase tracking-[0.2em]">{item.sector || item.subtitle || "Premium"}</p>
+                        </div>
+                        <ArrowRight className="ml-auto w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0" flex-shrink-0 />
+                      </motion.div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       <Chatbot />
       <Footer />
     </div>

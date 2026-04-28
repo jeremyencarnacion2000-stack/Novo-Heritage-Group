@@ -19,6 +19,7 @@ interface Property {
     bathrooms: number
     area: number
     subtitle?: string
+    transactionType?: string
 }
 
 interface PropertyCarouselProps {
@@ -86,7 +87,12 @@ export function PropertyCarousel({ properties }: PropertyCarouselProps) {
                                         </div>
 
                                         <div className="flex justify-between items-center">
-                                            <span className="text-xl font-light text-white">${property.price.toLocaleString()}</span>
+                                            <div className="flex flex-col">
+                                                <span className="text-xl font-light text-white">${property.price.toLocaleString('en-US')}</span>
+                                                {property.transactionType && (
+                                                    <span className="text-xs text-white/70">{property.transactionType}</span>
+                                                )}
+                                            </div>
                                             <div className="w-10 h-10 rounded-none bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-all duration-500 transform translate-x-4 group-hover/card:translate-x-0">
                                                 <ArrowRight className="w-5 h-5 text-white" />
                                             </div>

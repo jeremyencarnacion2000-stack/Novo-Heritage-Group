@@ -51,9 +51,17 @@ export function DynamicOfferBanner() {
 
                         <button
                             onClick={() => setIsVisible(false)}
-                            className="absolute top-3 right-3 p-1.5 hover:bg-foreground/5 rounded-full transition-colors text-muted-foreground hover:text-foreground"
+                            style={{ 
+                                width: '60px', 
+                                height: '60px', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center' 
+                            }}
+                            className="absolute top-0 right-0 hover:bg-foreground/5 rounded-full transition-colors text-muted-foreground hover:text-foreground z-50 active:scale-90"
+                            aria-label="Cerrar oferta"
                         >
-                            <X className="w-4 h-4" />
+                            <X style={{ width: '24px', height: '24px' }} />
                         </button>
 
                         <div className="flex flex-col gap-4 relative z-10">

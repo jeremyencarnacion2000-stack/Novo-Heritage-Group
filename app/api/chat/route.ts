@@ -2,88 +2,72 @@ import { streamText } from "ai"
 import { createOpenAI } from "@ai-sdk/openai"
 import sql from "@/lib/db"
 
-const groq = createOpenAI({
-  apiKey: process.env.GROQ_API_KEY,
-  baseURL: "https://api.groq.com/openai/v1",
+// SambaNova Client (Llama 3.1 405B for Elite Reasoning)
+const sambanova = createOpenAI({
+  apiKey: process.env.SAMBANOVA_API_KEY,
+  baseURL: "https://api.sambanova.ai/v1",
 })
 
-export const maxDuration = 30
+export const maxDuration = 45
 
 export async function POST(req: Request) {
   const { messages, userId } = await req.json()
 
-  // NEW: Fetch user profile for intelligent context
-  let userProfileContext = "";
+  // 1. Fetch User Profile for Hyper-Personalization
+  let userContext = "";
   if (userId) {
     try {
-      const profile = await sql`SELECT * FROM perfil_usuario WHERE usuario_id = ${userId} LIMIT 1`;
-      if (profile && profile.length > 0) {
-        userProfileContext = `\n\n**CONTEXTO DEL USUARIO ACTUAL (IA Profiling):**
-- Tipo de Usuario: ${profile[0].tipo_usuario}
-- Intereses detectados: ${JSON.stringify(profile[0].intereses)}
-- Score de Interés: ${JSON.stringify(profile[0].score_interes)}
-Usa este contexto para personalizar tus recomendaciones. Si están interesados en "inversión", prioriza Bienes Raíces.`;
+      const [profile] = await sql`SELECT * FROM perfil_usuario WHERE usuario_id = ${userId} LIMIT 1`;
+      if (profile) {
+        userContext = `\n\n**PERFIL DEL CLIENTE:**
+- Intereses: ${JSON.stringify(profile.intereses)}
+- Comportamiento: ${profile.tipo_usuario}
+- Últimas búsquedas: ${JSON.stringify(profile.busquedas_recientes)}
+Personaliza tu respuesta basándote en que el usuario ya ha mostrado interés en estas áreas.`;
       }
     } catch (e) {
-      console.error("Chat profiling failed:", e);
+      console.error("Profiling load failed:", e);
     }
   }
 
+  // 2. RAG: Fetch Real-Time Inventory for Recommendations
+  let inventoryContext = "";
+  try {
+    const lastMessage = messages[messages.length - 1].content.toLowerCase();
+    
+    // Simple Semantic-ish Filter: if user asks for specific location or type
+    let query = sql`SELECT title, price, location, sector, bedrooms, bathrooms FROM properties WHERE is_published = true `;
+    
+    if (lastMessage.includes("piantini") || lastMessage.includes("naco") || lastMessage.includes("punta cana")) {
+        const sector = lastMessage.includes("piantini") ? "Piantini" : lastMessage.includes("naco") ? "Naco" : "Punta Cana";
+        query = sql`${query} AND sector ILIKE ${'%' + sector + '%'}`;
+    }
+    
+    const listings = await sql`${query} ORDER BY created_at DESC LIMIT 3`;
+    
+    if (listings.length > 0) {
+      inventoryContext = `\n\n**INVENTARIO DISPONIBLE EN TIEMPO REAL:**
+${listings.map(l => `- ${l.title} en ${l.sector}: US$ ${l.price.toLocaleString()} (${l.bedrooms} Hab / ${l.bathrooms} Baños)`).join('\n')}
+Menciona estas opciones específicas si encajan con lo que busca el usuario.`;
+    }
+  } catch (e) {
+    console.error("Inventory RAG failed:", e);
+  }
+
   const result = streamText({
-    model: groq("llama-3.3-70b-versatile"),
-    system: `Eres un asistente virtual profesional de Novo Heritage, una empresa líder en República Dominicana que ofrece seguros de vehículos, bienes raíces y paquetes turísticos.
+    model: sambanova("Meta-Llama-3.1-405B-Instruct"),
+    system: `Eres "Novo AI", el asistente inteligente de Novo Heritage Group. Tu objetivo es asesorar a clientes de alto nivel en República Dominicana sobre Bienes Raíces, Seguros y Turismo.
 
-**INFORMACIÓN DE LA EMPRESA:**
-- Ubicación: Av. Winston Churchill, Santo Domingo, República Dominicana
-- Teléfono: +1 (809) 555-1234
-- Email: info@novoheritage.com
-- Horario: Lunes a Viernes 8:00 AM - 6:00 PM, Sábados 9:00 AM - 2:00 PM
+**DIRECTIVAS DE NOVO AI:**
+1. **Precisión Dominicana:** Conoces perfectamente sectores como Piantini, Naco, Cap Cana y Casa de Campo.
+2. **Mentalidad de Inversor:** Si hablan de bienes raíces, enfócate en plusvalía y retorno de inversión (ROI).
+3. **Conversión Intuitiva:** Si el usuario pregunta por algo general, guíalo hacia una recomendación específica de nuestro inventario real.
+4. **Tono:** Ejecutivo, fluido, sofisticado y servicial.
 
-**SERVICIOS:**
+${userContext}
+${inventoryContext}
 
-1. SEGUROS DE VEHÍCULOS:
-   - Cobertura Básica: $899/año - Responsabilidad civil, asistencia vial básica, gastos médicos, defensa legal
-   - Cobertura Amplia: $1,499/año - Todo lo anterior + daños materiales, robo total, asistencia 24/7, auto sustituto, cristales
-   - Cobertura Premium: $2,299/año - Todo lo anterior + sin deducible, cobertura internacional, accesorios, conductor designado, concierge 24/7
-
-2. BIENES RAÍCES:
-   - Compra y venta de propiedades residenciales y comerciales
-   - Alquiler de apartamentos, casas y locales comerciales
-   - Asesoría en inversión inmobiliaria
-   - Gestión de propiedades
-   - Valoración de inmuebles
-
-3. TURISMO:
-   - Paquetes todo incluido a destinos caribeños
-   - Tours personalizados en República Dominicana
-   - Reservas de hoteles y resorts de lujo
-   - Experiencias VIP y excursiones
-   - Organización de eventos corporativos
-
-**TU OBJETIVO:**
-- Ayudar a los clientes a encontrar el servicio adecuado
-- Proporcionar información detallada sobre precios y coberturas
-- Guiar en el proceso de cotización y compra
-- Responder preguntas frecuentes
-- Conectar con asesores humanos cuando sea necesario
-
-**ESTILO DE COMUNICACIÓN:**
-- Amable, profesional y cercano
-- Usa emojis ocasionalmente para ser más amigable
-- Proporciona información clara y estructurada
-- Ofrece opciones específicas cuando sea posible
-- Pregunta detalles relevantes para personalizar recomendaciones
-
-**PREGUNTAS FRECUENTES:**
-- Horarios de atención
-- Métodos de pago (efectivo, tarjeta, transferencia, financiamiento)
-- Proceso de cotización (inmediato en línea)
-- Documentos requeridos
-- Tiempo de procesamiento
-- Cobertura geográfica
-
-Si no tienes información específica, ofrece conectar al cliente con un asesor humano especializado.
-${userProfileContext}`,
+Si el usuario pregunta por algo que no está en el listado anterior, invítalo a dejar sus datos para que un asesor busque la propiedad ideal fuera de catálogo.`,
     messages,
   })
 

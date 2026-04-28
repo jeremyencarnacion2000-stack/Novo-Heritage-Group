@@ -1,30 +1,5 @@
 import { NextResponse } from "next/server"
-import { supabase } from "@/lib/supabase"
-
-type DbProperty = {
-  id: string
-  title: string
-  address: string | null
-  location: string | null
-  status: string | null
-  price: number | null
-  type: string | null
-  bedrooms: number | null
-  bathrooms: number | null
-  area: number | null
-  year_built: number | null
-  description: string | null
-  features: string[] | null
-  agent_name: string | null
-  agent_phone: string | null
-  image: string | null
-  images: string[] | null
-  estimated_rent_monthly: number | null
-  hoa_fee_monthly: number | null
-  taxes_annual: number | null
-  maintenance_annual: number | null
-  occupancy_rate: number | null
-}
+import sql from "@/lib/db"
 
 export async function GET(
   _req: Request,
@@ -32,50 +7,45 @@ export async function GET(
 ) {
   const { id } = params
   try {
-    const { data, error } = await supabase
-      .from('properties')
-      .select('*')
-      .eq('id', id)
-      .single()
+    const [data]: any = await sql`
+      SELECT * FROM properties WHERE id = ${id} LIMIT 1
+    `
 
-    if (error) throw error
     if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-    const price = data.price ?? undefined
-    const rentMonthly = data.estimated_rent_monthly ?? undefined
-    const hoaMonthly = data.hoa_fee_monthly ?? undefined
-    const taxesAnnual = data.taxes_annual ?? undefined
-    const maintAnnual = data.maintenance_annual ?? undefined
-    const occRate = data.occupancy_rate ?? undefined
+    const price = parseFloat(data.price) || 0
+    const rentMonthly = parseFloat(data.estimated_rent_monthly) || 0
+    const hoaMonthly = parseFloat(data.hoa_fee_monthly) || 0
+    const taxesAnnual = parseFloat(data.taxes_annual) || 0
+    const maintAnnual = parseFloat(data.maintenance_annual) || (price * 0.01)
+    const occRate = parseFloat(data.occupancy_rate) || 0.9
 
-    const annualRentGross = rentMonthly && occRate ? rentMonthly * 12 * occRate : (rentMonthly ? rentMonthly * 12 : undefined)
-    const closingCosts = price ? price * 0.03 : undefined
-    const annualHOA = hoaMonthly ? hoaMonthly * 12 : 0
-    const annualMaint = maintAnnual ?? (price ? price * 0.01 : 0)
-    const annualTaxes = taxesAnnual ?? 0
-    const netAnnual = (annualRentGross ?? 0) - annualHOA - annualMaint - annualTaxes
-    const roi = price && closingCosts ? (netAnnual / (price + closingCosts)) * 100 : undefined
+    const annualRentGross = rentMonthly * 12 * occRate
+    const closingCosts = price * 0.03
+    const annualHOA = hoaMonthly * 12
+    const netAnnual = annualRentGross - annualHOA - maintAnnual - taxesAnnual
+    const roi = price > 0 ? (netAnnual / (price + closingCosts)) * 100 : 0
 
     const mapped = {
-      id: data.id,
-      title: data.title,
-      address: data.address ?? undefined,
-      location: data.location ?? undefined,
-      status: data.status ?? undefined,
+      id: String(data.id),
+      title: data.title || "Propiedad Novo Heritage",
+      address: data.sector || data.city || data.location || "Ubicación Premium",
+      location: data.location || "República Dominicana",
+      status: 'available',
       price,
-      type: data.type ?? undefined,
-      bedrooms: data.bedrooms ?? undefined,
-      bathrooms: data.bathrooms ?? undefined,
-      area: data.area ?? undefined,
-      yearBuilt: data.year_built ?? undefined,
-      description: data.description ?? undefined,
-      features: data.features ?? undefined,
+      type: data.type?.toLowerCase() || "apartamento",
+      bedrooms: data.bedrooms || 0,
+      bathrooms: data.bathrooms || 0,
+      area: data.area || 0,
+      yearBuilt: new Date(data.created_at || Date.now()).getFullYear(),
+      description: data.description || "Residencia exclusiva gestionada por Novo Heritage Group.",
+      features: Array.isArray(data.features) ? data.features : [],
       agent: {
-        name: data.agent_name ?? 'Agente Novo Heritage',
-        phone: data.agent_phone ?? 'N/D',
+        name: 'Agente Novo Heritage',
+        phone: 'N/D',
       },
-      image: data.image ?? undefined,
-      images: data.images ?? undefined,
+      image: data.image || "/luxury-modern-villa-renaissance.png",
+      images: data.image ? [data.image] : ["/luxury-modern-villa-renaissance.png"],
       metrics: {
         estimatedRentMonthly: rentMonthly,
         hoaFeeMonthly: hoaMonthly,
@@ -88,26 +58,7 @@ export async function GET(
 
     return NextResponse.json(mapped)
   } catch (err) {
-    console.error('Supabase property by id failed, using fallback:', err)
-    const fallback = {
-      id,
-      title: 'Propiedad de ejemplo',
-      location: 'Santo Domingo',
-      address: 'Dirección no disponible',
-      price: 3500000,
-      type: 'apartamento' as const,
-      bedrooms: 3,
-      bathrooms: 2,
-      area: 160,
-      status: 'available' as const,
-      image: '/placeholder.jpg',
-      images: ['/placeholder.jpg', '/placeholder.jpg', '/placeholder.jpg', '/placeholder.jpg', '/placeholder.jpg'],
-      yearBuilt: 2019,
-      featured: false,
-      description: 'Detalle no disponible. Este es un contenido de ejemplo.',
-      features: ['Balcón', 'Parqueo', 'Seguridad 24/7'],
-      agent: { name: 'Agente Novo Heritage', phone: 'N/D' },
-    }
-    return NextResponse.json(fallback)
+    console.error('Neon property by id failed:', err)
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }

@@ -110,6 +110,16 @@ export default function SegurosClientPage() {
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] rounded-none bg-primary/5 blur-[120px]" />
         <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] rounded-none bg-primary/5 blur-[120px]" />
+        
+        {/* Section Watermark */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[800px] aspect-square opacity-[0.03] grayscale brightness-0 invert pointer-events-none select-none overflow-hidden">
+          <Image
+            src="/seguros.svg"
+            alt=""
+            fill
+            className="object-contain scale-150 rotate-[-15deg]"
+          />
+        </div>
       </div>
 
       <section ref={heroRef} id="seguros-hero" className="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
@@ -151,7 +161,7 @@ export default function SegurosClientPage() {
               </p>
 
               <div id="cotizaciones" className="flex flex-col sm:flex-row gap-6 w-full sm:w-auto">
-                <Dialog>
+                <Dialog modal={true}>
                   <DialogTrigger asChild>
                     <button className="group relative flex items-center justify-between gap-12 px-12 py-6 bg-primary text-black transition-all duration-700 hover:scale-[1.02] shadow-premium overflow-hidden border border-primary/20">
                       <span className="text-sm font-bold uppercase tracking-[0.3em]">Cotizar Ahora</span>
@@ -159,7 +169,7 @@ export default function SegurosClientPage() {
                       <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-6xl w-full p-0 bg-transparent border-none overflow-y-auto max-h-[95vh]">
+                  <DialogContent className="max-w-6xl w-full p-0 bg-transparent border-none overflow-y-auto max-h-[92vh] outline-none">
                     <DialogTitle className="sr-only">Cotizador de Seguros</DialogTitle>
                     <DialogDescription className="sr-only">Formulario de cotización de seguros patrimoniales Novo Heritage</DialogDescription>
                     <div className="bg-background rounded-none p-10 md:p-20 shadow-2xl border border-primary/20 relative">
@@ -365,7 +375,7 @@ export default function SegurosClientPage() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-8 justify-center items-center">
-              <Dialog>
+              <Dialog modal={true}>
                 <DialogTrigger asChild>
                   <button className="group relative flex items-center justify-between gap-12 px-15 py-7 bg-primary text-black transition-all duration-700 hover:scale-[1.05] shadow-premium overflow-hidden border border-primary/20">
                     <span className="text-sm font-bold uppercase tracking-[0.4em]">Agendar Cita Private</span>
@@ -373,7 +383,7 @@ export default function SegurosClientPage() {
                     <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </button>
                 </DialogTrigger>
-                <DialogContent className="max-w-6xl w-full p-0 bg-transparent border-none overflow-y-auto max-h-[95vh]">
+                <DialogContent className="max-w-6xl w-full p-0 bg-transparent border-none overflow-y-auto max-h-[92vh] outline-none">
                   <DialogTitle className="sr-only">Agendar Cita Private</DialogTitle>
                   <DialogDescription className="sr-only">Formulario de reserva de cita con asesor de seguros Novo Heritage</DialogDescription>
                   <div className="bg-background rounded-none p-10 md:p-20 shadow-2xl border border-primary/20 relative">
