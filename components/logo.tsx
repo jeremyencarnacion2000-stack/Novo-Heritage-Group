@@ -12,7 +12,7 @@ export const Logo = ({ className }: { className?: string }) => {
       }}
     >
       <Image
-        src="/Icono.png"
+        src="/Logo Novo Heritage.svg"
         alt="Novo Heritage Logo"
         fill
         className="object-contain brightness-0 invert"

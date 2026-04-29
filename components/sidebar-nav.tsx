@@ -1,10 +1,13 @@
 "use client"
 
 import { motion, AnimatePresence } from "framer-motion"
+import { useState, useEffect } from "react"
 // @ts-ignore - lucide-react types not resolving correctly
-import { X, Home, Shield, Building2, Plane, MessageSquare, Info, ArrowRight } from "lucide-react"
+import { X, Home, Shield, Building2, Plane, MessageSquare, Info, ArrowRight, ExternalLink } from "lucide-react"
 import Link from "next/link"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { supabase } from "@/lib/supabase"
+import { isStaffMember, BITRIX_CRM_URL } from "@/lib/staff-config"
 
 interface SidebarNavProps {
     isOpen: boolean
@@ -22,6 +25,25 @@ const menuItems = [
 ]
 
 export function SidebarNav({ isOpen, onClose }: SidebarNavProps) {
+    const [user, setUser] = useState<any>(null)
+    const [showCRM, setShowCRM] = useState(false)
+
+    useEffect(() => {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            const currentUser = session?.user ?? null
+            setUser(currentUser)
+            setShowCRM(isStaffMember(currentUser?.email))
+        })
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            const currentUser = session?.user ?? null
+            setUser(currentUser)
+            setShowCRM(isStaffMember(currentUser?.email))
+        })
+
+        return () => subscription.unsubscribe()
+    }, [])
+
     const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
         if (href.startsWith("#")) {
             e.preventDefault()
@@ -106,6 +128,37 @@ export function SidebarNav({ isOpen, onClose }: SidebarNavProps) {
                                         </Link>
                                     </motion.div>
                                 ))}
+
+                                {showCRM && (
+                                    <motion.div
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: menuItems.length * 0.1 }}
+                                        className="mt-4"
+                                    >
+                                        <a
+                                            href={BITRIX_CRM_URL}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="group flex items-center justify-between p-4 rounded-none bg-primary/5 border border-primary/20 hover:bg-primary/10 transition-all duration-300"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 flex items-center justify-center rounded-none bg-primary/20 border border-primary/40 group-hover:bg-primary/30 transition-all">
+                                                    <ExternalLink className="w-5 h-5 text-primary" />
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-lg font-bold text-primary group-hover:text-amber-300 transition-colors">
+                                                        Panel Bitrix24
+                                                    </span>
+                                                    <span className="text-[10px] uppercase font-black tracking-tighter text-amber-500/50">
+                                                        CRM Exclusivo Staff
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <ArrowRight className="w-4 h-4 text-primary group-hover:translate-x-1 transition-all" />
+                                        </a>
+                                    </motion.div>
+                                )}
                             </div>
                         </nav>
 

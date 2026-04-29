@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 // @ts-ignore - lucide-react types not resolving correctly
-import { Settings, Menu, LogOut, User, ShieldCheck } from "lucide-react"
+import { Settings, Menu, LogOut, User, ShieldCheck, ExternalLink } from "lucide-react"
 import { Logo } from "@/components/logo"
 import Link from "next/link"
 import {
@@ -17,6 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { isStaffMember, BITRIX_CRM_URL } from "@/lib/staff-config"
 
 interface HeaderProps {
   isScrolled: boolean
@@ -53,6 +54,7 @@ export function Header({ isScrolled, onMenuClick, isIntroFinished = true }: Head
   const userEmail = user?.email
   const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || userEmail?.split('@')[0]
   const userAvatar = user?.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userEmail || 'User'}`
+  const showCRM = isStaffMember(userEmail)
 
   return (
     <header
@@ -86,6 +88,17 @@ export function Header({ isScrolled, onMenuClick, isIntroFinished = true }: Head
       </div>
 
       <div className="flex items-center gap-4">
+        {showCRM && (
+          <a
+            href={BITRIX_CRM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-5 py-2 bg-primary/10 border border-primary/30 text-primary text-[10px] font-black uppercase tracking-[0.2em] hover:bg-primary hover:text-black transition-all duration-300 rounded-none"
+          >
+            CRM
+            <ExternalLink className="w-3 h-3" />
+          </a>
+        )}
         <div className="hidden md:flex items-center gap-2 pr-4 border-r border-foreground/10">
            <ThemeToggle />
         </div>
@@ -143,6 +156,14 @@ export function Header({ isScrolled, onMenuClick, isIntroFinished = true }: Head
                     <span className="text-[10px] font-black uppercase tracking-widest text-white/70">Panel de Control</span>
                   </Link>
                 </DropdownMenuItem>
+                {showCRM && (
+                  <DropdownMenuItem asChild className="p-3 cursor-pointer hover:bg-primary/10 transition-colors">
+                    <a href={BITRIX_CRM_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 w-full">
+                      <ExternalLink className="h-4 w-4 text-primary" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-primary">Acceder al CRM</span>
+                    </a>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator className="bg-foreground/10" />
                 <DropdownMenuItem onClick={handleLogout} className="p-3 cursor-pointer text-red-400 hover:bg-red-500/10 transition-colors">
                   <div className="flex items-center gap-3 w-full">
