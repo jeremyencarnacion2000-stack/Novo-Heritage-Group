@@ -21,6 +21,7 @@ import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { PropertyCarousel } from "@/components/property-carousel"
 import { RealEstateQuoteForm } from "@/components/forms/real-estate-quote-form"
+import { PropertySellForm } from "@/components/forms/property-sell-form"
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { BookingForms } from "@/components/booking-forms"
 import { PremiumHeading, PremiumText } from "@/components/premium-typography"
@@ -77,24 +78,24 @@ export default function BienesRaicesClientPage() {
   
   const [services, setServices] = useState<any[]>([
     {
-      icon: "Home",
-      title: "Adquisición Elitista",
-      description: "Propiedades que definen estatus y legado arquitectónico.",
+      icon: "TrendingUp",
+      title: "Asesoría VIP de Inversiones",
+      description: "Servicio de localización y propuesta de inmuebles con alto ROI y plusvalía asegurada.",
     },
     {
       icon: "Building",
-      title: "Asset Management",
-      description: "Maximizamos el valor de su patrimonio con estrategias globales.",
+      title: "Gestión Inmobiliaria Integral",
+      description: "Nos encargamos de comercializar, mantener y rentabilizar su propiedad sin que mueva un dedo.",
     },
     {
       icon: "Users",
-      title: "Concierge Inmobiliario",
-      description: "Acompañamiento VIP desde la conceptualización hasta el cierre.",
+      title: "Concierge de Alto Nivel",
+      description: "Asistencia dedicada. Gestionamos mudanzas, mobiliario e integración de inquilinos exclusivos.",
     },
     {
       icon: "Shield",
-      title: "Blindaje Jurídico",
-      description: "Transacciones protegidas bajo los más altos estándares legales.",
+      title: "Seguridad y Blindaje Legal",
+      description: "Auditoría de activos, cierres seguros y debida diligencia de título con especialistas.",
     },
   ])
 
@@ -426,16 +427,35 @@ export default function BienesRaicesClientPage() {
 
       {/* Full Catalog Trigger */}
       <section id="vender" className="section-airy relative px-4 overflow-hidden bg-background">
-        <div className="container layout-guide-visual max-w-5xl mx-auto text-center">
-            <PremiumHeading as="h2" className="mb-12 leading-[0.9]">
-               Encuentra tu lugar en el <span className="italic text-primary">mundo</span>
-            </PremiumHeading>
-            <Link href="/bienes-raices/coleccion">
-              <button className="group relative px-20 py-7 bg-primary text-black text-sm font-bold uppercase tracking-[0.4em] transition-all hover:scale-[1.05] shadow-premium rounded-none">
-                Ver Colección Completa
-                <div className="absolute inset-x-0 -bottom-1 h-px bg-white/20 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-700" />
-              </button>
-            </Link>
+        <div className="container layout-guide-visual max-w-5xl mx-auto flex flex-col md:flex-row gap-16 items-center">
+            <div className="flex-1">
+                <PremiumHeading as="h2" className="mb-8 leading-[0.9] text-left">
+                   Venda o Alquile con la red <span className="italic text-primary">Global</span>
+                </PremiumHeading>
+                <PremiumText className="text-left mb-10 text-foreground/50 tracking-wider">
+                   Asociar su propiedad a Novo Heritage asegura su exposición al público internacional y corporativo idóneo, incrementando sus probabilidades de cierre exitoso con total discreción y rigor legal.
+                </PremiumText>
+                
+                <div className="flex items-start gap-4 mb-6">
+                    <Check className="w-5 h-5 text-primary mt-1" />
+                    <div>
+                        <h4 className="text-sm font-bold uppercase tracking-wider mb-2">Evaluación Gratuita</h4>
+                        <p className="text-xs text-foreground/40 font-light">Cotización comercial basada en datos de mercado y posicionamiento.</p>
+                    </div>
+                </div>
+                
+                <div className="flex items-start gap-4">
+                    <Check className="w-5 h-5 text-primary mt-1" />
+                    <div>
+                        <h4 className="text-sm font-bold uppercase tracking-wider mb-2">Comercialización Elite</h4>
+                        <p className="text-xs text-foreground/40 font-light">Campañas de impacto digital en nuestro ecosistema de inversores.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div className="flex-1 w-full relative z-10">
+                <PropertySellForm />
+            </div>
         </div>
       </section>
 
