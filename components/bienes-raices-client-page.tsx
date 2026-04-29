@@ -5,7 +5,7 @@ import { motion, useScroll, useTransform, useSpring, AnimatePresence } from "fra
 import Image from "next/image"
 import Link from "next/link"
 // @ts-ignore - lucide-react types
-import { Bed, Bath, Maximize, MapPin, Heart, Home, Building, Castle, Warehouse, Search, SlidersHorizontal, ArrowRight, Star, Award, Shield, Users, ChevronDown, Layers, TrendingUp, DollarSign } from "lucide-react"
+import { Bed, Bath, Maximize, MapPin, Heart, Home, Building, Castle, Warehouse, Search, SlidersHorizontal, ArrowRight, Star, Award, Shield, Users, ChevronDown, Layers, TrendingUp, DollarSign, Check } from "lucide-react"
 import { Slider } from "@/components/ui/slider"
 import { useCart } from "@/hooks/use-cart"
 import { useToast } from "@/hooks/use-toast"
