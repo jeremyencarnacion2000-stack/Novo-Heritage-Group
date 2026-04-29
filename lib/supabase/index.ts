@@ -15,14 +15,16 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Warning: Missing Supabase environment variables. This may cause issues during build or runtime.')
 }
 
-// Create Supabase client
-export const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseAnonKey || 'placeholder', {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true
-  }
-})
+// Create Supabase client with safety check for build time
+export const supabase = (supabaseUrl && supabaseAnonKey) 
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true
+      }
+    })
+  : createClient('https://placeholder-url.supabase.co', 'placeholder-key')
 
 // Export types
 export type { User, Session } from '@supabase/supabase-js'
