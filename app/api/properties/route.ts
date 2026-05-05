@@ -4,27 +4,28 @@ import cockroachDb from "@/lib/cockroach-db"
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export async function GET() {
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const debug = searchParams.get('debug') === 'true';
+
   try {
-    // Fetch from CockroachDB inventario_digital (populated by n8n multimedia ingestor)
+    // Fetch all columns to prevent hardcoding
     const data = await cockroachDb`
-      SELECT
-        id,
-        nombre_proyecto,
-        titulo_profesional,
-        descripcion_limpia,
-        es_constructora_oficial,
-        zona,
-        precio,
-        multimedia
+      SELECT *
       FROM public.inventario_digital
       WHERE nombre_proyecto IS NOT NULL
         AND nombre_proyecto NOT IN ('Sin nombre', 'Parseo fallido', 'No disponible', '')
-        AND descripcion_limpia IS NOT NULL
-        AND LENGTH(descripcion_limpia) > 5
       ORDER BY id DESC
       LIMIT 100
     `;
+
+    if (debug) {
+      return NextResponse.json({
+        count: data?.length || 0,
+        sample: data?.[0] || null,
+        raw: data
+      });
+    }
 
     if (!data || data.length === 0) {
       return NextResponse.json([])
@@ -38,19 +39,12 @@ export async function GET() {
         priceNum = parseFloat(cleaned) || 0;
       }
 
-      // Parse multimedia JSON and transform Dropbox links for direct rendering
+      // Multimedia handling
       let images: string[] = [];
       try {
         const parsed = typeof p.multimedia === 'string' ? JSON.parse(p.multimedia) : (p.multimedia || []);
         if (Array.isArray(parsed)) {
-          images = parsed
-            .filter((u: string) => u && u.startsWith('http'))
-            .map((u: string) => {
-              if (u.includes('dropbox.com')) {
-                return u.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '').replace('?dl=1', '');
-              }
-              return u;
-            });
+          images = parsed.filter((u: string) => u && typeof u === 'string' && u.startsWith('http'));
         }
       } catch { /* ignore */ }
 
@@ -65,10 +59,11 @@ export async function GET() {
         price: priceNum,
         priceLabel: p.precio || 'Consultar',
         type: "propiedad",
-        bedrooms: 3,
-        bathrooms: 2,
-        area: 120,
-        sqft: 1292,
+        // Extract from dynamic columns if present, otherwise fallback
+        bedrooms: parseInt(p.habitaciones || p.cuartos || 3),
+        bathrooms: parseInt(p.banos || p.sanitarios || 2),
+        area: parseFloat(p.area_m2 || p.metros || p.construccion || 150),
+        sqft: Math.round(parseFloat(p.area_m2 || 150) * 10.764),
         yearBuilt: new Date().getFullYear(),
         description: p.descripcion_limpia || "Propiedad gestionada por Novo Heritage Group.",
         features: p.es_constructora_oficial ? ["Constructora Oficial", "Proyecto Verificado"] : ["Verificación Pendiente"],
@@ -82,7 +77,7 @@ export async function GET() {
         featured: p.es_constructora_oficial === true,
         city: p.zona || 'Santo Domingo',
         sector: p.zona || 'N/A',
-        parking: 1,
+        parking: parseInt(p.parqueos || 1),
         amenities: [],
         transactionType: 'venta',
         isOfficial: p.es_constructora_oficial,

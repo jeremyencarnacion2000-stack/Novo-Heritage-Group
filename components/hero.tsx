@@ -43,6 +43,20 @@ export function Hero({ introFinished, onIntroComplete }: HeroProps) {
     <section className="relative h-screen w-full overflow-hidden bg-black">
       {/* 4K Cinematic Transition Video */}
       <div className="absolute inset-0 z-0 h-full w-full bg-black">
+        {/* Ambient blurred background to match video color effortlessly on mobile letterbars */}
+        <video
+          src="/Sin título (Video) (1).mp4"
+          autoPlay
+          muted
+          playsInline
+          loop
+          className={`absolute inset-0 h-full w-full object-cover scale-150 blur-3xl md:hidden transition-opacity duration-1500 ease-out ${videoLoaded ? "opacity-100" : "opacity-0"}`}
+          style={{ transform: "translateZ(0)", backfaceVisibility: "hidden" }}
+        />
+        {/* Subtle vignette to preserve white text readability against bright video background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/60 md:hidden z-[1]" />
+
+        {/* Main sharp video */}
         <video
           ref={videoRef}
           src="/Sin título (Video) (1).mp4"
@@ -57,7 +71,7 @@ export function Hero({ introFinished, onIntroComplete }: HeroProps) {
              transform: "translateZ(0)",
              WebkitFontSmoothing: "antialiased"
           }}
-          className={`h-full w-full object-contain md:object-cover object-center transition-opacity duration-1500 ease-out ${videoLoaded ? "opacity-100" : "opacity-0"}`}
+          className={`relative z-[2] h-full w-full object-contain md:object-cover object-center transition-opacity duration-1500 ease-out ${videoLoaded ? "opacity-100" : "opacity-0"}`}
         />
         
         {/* Subtle Overlay to match UI colors */}
