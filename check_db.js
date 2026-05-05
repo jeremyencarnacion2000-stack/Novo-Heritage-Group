@@ -5,16 +5,13 @@ async function check() {
   console.log('Connecting to CockroachDB...');
   try {
     const res = await sql`
-      SELECT id, nombre_proyecto, created_at, multimedia 
+      SELECT *
       FROM public.inventario_digital 
       ORDER BY id DESC 
-      LIMIT 10
+      LIMIT 1
     `;
-    console.log('LATEST_ENTRIES:');
+    console.log('LATEST_FULL_ROW:');
     console.log(JSON.stringify(res, null, 2));
-    
-    const count = await sql`SELECT COUNT(*) FROM public.inventario_digital`;
-    console.log('TOTAL_COUNT:', count[0].count);
     
   } catch (err) {
     console.error('DB Error:', err.message);

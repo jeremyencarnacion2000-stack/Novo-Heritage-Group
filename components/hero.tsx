@@ -40,9 +40,9 @@ export function Hero({ introFinished, onIntroComplete }: HeroProps) {
   }, [videoLoaded])
 
   return (
-    <section className="relative h-screen w-full overflow-hidden bg-background">
+    <section className="relative h-screen w-full overflow-hidden bg-black">
       {/* 4K Cinematic Transition Video */}
-      <div className="absolute inset-0 z-0 h-full w-full">
+      <div className="absolute inset-0 z-0 h-full w-full bg-black">
         <video
           ref={videoRef}
           src="/Sin título (Video) (1).mp4"
@@ -57,7 +57,7 @@ export function Hero({ introFinished, onIntroComplete }: HeroProps) {
              transform: "translateZ(0)",
              WebkitFontSmoothing: "antialiased"
           }}
-          className={`h-full w-full object-cover object-center transition-opacity duration-1500 ease-out ${videoLoaded ? "opacity-100" : "opacity-0"}`}
+          className={`h-full w-full object-contain md:object-cover object-center transition-opacity duration-1500 ease-out ${videoLoaded ? "opacity-100" : "opacity-0"}`}
         />
         
         {/* Subtle Overlay to match UI colors */}
