@@ -56,23 +56,32 @@ export function Hero({ introFinished, onIntroComplete }: HeroProps) {
         {/* Subtle vignette to preserve white text readability against bright video background */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/60 md:hidden z-[1]" />
 
-        {/* Main sharp video */}
-        <video
-          ref={videoRef}
-          src="/Sin título (Video) (1).mp4"
-          autoPlay
-          muted
-          playsInline
-          preload="auto"
-          onLoadedData={() => setVideoLoaded(true)}
-          onEnded={handleVideoEnd}
-          style={{ 
-             backfaceVisibility: "hidden", 
-             transform: "translateZ(0)",
-             WebkitFontSmoothing: "antialiased"
-          }}
-          className={`relative z-[2] h-full w-full object-contain md:object-cover object-center transition-opacity duration-1500 ease-out ${videoLoaded ? "opacity-100" : "opacity-0"}`}
-        />
+        {/* Main sharp video wrapper allows exact tracking of bottom-right watermark */}
+        <div className="absolute inset-0 z-[2] flex flex-col items-center justify-center pointer-events-none">
+           <div className="relative w-full aspect-video md:aspect-auto md:w-full md:h-full overflow-hidden">
+               <video
+                 ref={videoRef}
+                 src="/Sin título (Video) (1).mp4"
+                 autoPlay
+                 muted
+                 playsInline
+                 preload="auto"
+                 onLoadedData={() => setVideoLoaded(true)}
+                 onEnded={handleVideoEnd}
+                 style={{ 
+                    backfaceVisibility: "hidden", 
+                    transform: "translateZ(0)",
+                    WebkitFontSmoothing: "antialiased"
+                 }}
+                 className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-1500 ease-out ${videoLoaded ? "opacity-100" : "opacity-0"}`}
+               />
+
+               {/* Smart Glass Mask over 'Veo' watermark */}
+               <div className="absolute bottom-[2%] right-[2%] md:bottom-8 md:right-8 w-16 md:w-20 h-6 md:h-8 backdrop-blur-3xl bg-background/20 rounded z-10 border border-white/5 flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 rounded-full bg-white/30 animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
+               </div>
+           </div>
+        </div>
         
         {/* Subtle Overlay to match UI colors */}
         <div className="absolute inset-0 bg-black/5 mix-blend-multiply pointer-events-none" />
