@@ -14,10 +14,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabase"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { isStaffMember, BITRIX_CRM_URL } from "@/lib/staff-config"
+import { useAuth } from "@/hooks/use-auth"
 
 interface HeaderProps {
   isScrolled: boolean
@@ -26,34 +25,15 @@ interface HeaderProps {
 }
 
 export function Header({ isScrolled, onMenuClick, isIntroFinished = true }: HeaderProps) {
-  const [user, setUser] = useState<any>(null)
-  const router = useRouter()
-
-  useEffect(() => {
-    // 1. Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-    })
-
-    // 2. Listen for auth changes (Google Sign In, Sign Out, etc.)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-      if (_event === 'SIGNED_IN') router.refresh()
-    })
-
-    return () => subscription.unsubscribe()
-  }, [router])
+  const { user, logout, status } = useAuth()
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    setUser(null)
-    router.push('/')
-    router.refresh()
+    logout()
   }
 
   const userEmail = user?.email
-  const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || userEmail?.split('@')[0]
-  const userAvatar = user?.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userEmail || 'User'}`
+  const userName = user?.name || (user as any)?.user_metadata?.full_name || userEmail?.split('@')[0]
+  const userAvatar = user?.image || (user as any)?.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userEmail || 'User'}`
   const showCRM = isStaffMember(userEmail)
 
   return (

@@ -1,0 +1,287 @@
+{
+  "name": "Social Media Daily Auto-Poster - Novo Heritage",
+  "nodes": [
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "hour": 9,
+              "minute": 0
+            }
+          ]
+        }
+      },
+      "id": "cron-daily",
+      "name": "Daily 9AM Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1.1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Eres el Social Media Manager de Novo Heritage Group, agencia premium de bienes raíces. Tu tono es: profesional, elegante, asesor experto. Usa la paleta de colores: Dorado (#D4AF37), Negro (#0A0A0A), Blanco.\n\nREGLAS:\n1. Publica contenido de valor: tips de inversión, propiedades destacadas, consejos de diseño\n2. Incluye siempre un llamado a la acción suave\n3. Usa máximo 2-3 párrafos\n4. Genera un título atractivo\n5. Añade 3 hashtags relevantes\n\nFORMATO DE RESPUESTA JSON:\n{\"title\": \"Título del post\", \"content\": \"Texto del post\", \"hashtags\": [\"#BienesRaices\", \"#Inversión\"]}"
+            },
+            {
+              "role": "user",
+              "content": "Genera el contenido para hoy {{ $now.format('DD/MM/YYYY') }}. Incluye una propiedad destacada o consejo de inversión premium."
+            }\n          ]
+        },
+        "options": {}
+      },
+      "id": "ai-content-generator",
+      "name": "🎯 AI Content Generator",
+      "type": "@n8n/nodes-langchain.openAi",
+      "typeVersion": 1,
+      "position": [500, 300],
+      "credentials": {
+        "openAiApi": "OpenAI"
+      }
+    },
+    {
+      "parameters": {
+        "operation": "generateImage",
+        "model": "dall-e-3",
+        "prompt": "Diseño premium para redes sociales de bienes raíces. Paleta: dorado (#D4AF37) y negro (#0A0A0A). Estilo: elegancia, arquitectura moderna, minimalismo lujoso. Texto: '{{ $('AI Content Generator').item.json.title }}' - tipografía serif elegante. Proporción 1:1 para Instagram/Facebook, fondo oscuro con detalles dorados sutiles, fotografía de propiedad premium o representación 3D sofisticada.",
+        "size": "1024x1024",
+        "quality": "hd",
+        "style": "vivid"
+      },
+      "id": "image-generator",
+      "name": "🎨 Generate Branded Image",
+      "type": "@n8n/nodes-langchain.openAi",
+      "typeVersion": 1,
+      "position": [750, 200],
+      "credentials": {
+        "openAiApi": "OpenAI"
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = items[0].json;\nreturn {\n  json: {\n    title: data.title,\n    content: data.content,\n    hashtags: data.hashtags.join(' '),\n    fullPost: `${data.title}\n\n${data.content}\n\n${data.hashtags.join(' ')}`,\n    imagePrompt: `Propiedad premium ${data.title}`\n  }\n};"
+      },
+      "id": "format-data",
+      "name": "🔄 Format Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [750, 350]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "operation": "post",
+        "message": "{{ $('Format Data').item.json.fullPost }}",
+        "additionalFields": {
+          "media": {
+            "url": "={{ $('Upload Image').item.json.secure_url }}"
+          }
+        }
+      },
+      "id": "post-twitter",
+      "name": "🐦 Post to X/Twitter",
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 2,
+      "position": [1100, 150],
+      "credentials": {
+        "twitterOAuth2Api": "Twitter"
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "post",
+        "operation": "create",
+        "author": "me",
+        "message": "{{ $('Format Data').item.json.fullPost }}"
+      },
+      "id": "post-linkedin",
+      "name": "💼 Post to LinkedIn",
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 2,
+      "position": [1100, 250],
+      "credentials": {
+        "linkedInOAuth2Api": "LinkedIn"
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "operation": "upload",
+        "binaryData": true,
+        "options": {}
+      },
+      "id": "upload-cloudinary",
+      "name": "☁️ Upload Image",
+      "type": "n8n-nodes-base.cloudinary",
+      "typeVersion": 1,
+      "position": [1000, 350],
+      "credentials": {
+        "cloudinaryApi": "Cloudinary"
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v18.0/me/photos",
+        "authentication": "oAuth2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $('Upload Image').item.json.secure_url }}"
+            },
+            {
+              "name": "caption",
+              "value": "{{ $('Format Data').item.json.fullPost }}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $('Upload Image').item.json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "post-facebook",
+      "name": "📘 Post to Facebook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1100, 350],
+      "credentials": {
+        "oAuth2Api": "Facebook"
+      }
+    },
+    {
+      "parameters": {
+        "webhook": "instagram",
+        "options": {}
+      },
+      "id": "post-instagram",
+      "name": "📸 Post to Instagram",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [1100, 450],
+      "credentials": {
+        "oAuth2Api": "Instagram"
+      },
+      "notes": "Usar Facebook Graph API para Instagram Business"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $('Format Data').item.json.content.length }}",
+              "operation": "larger",
+              "value2": 10
+            }
+          ]
+        }
+      },
+      "id": "validate-content",
+      "name": "✅ Validate Content",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [925, 300]
+    }
+  ],
+  "connections": {
+    "Daily 9AM Trigger": {
+      "main": [
+        [
+          {
+            "node": "🎯 AI Content Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🎯 AI Content Generator": {
+      "main": [
+        [
+          {
+            "node": "🔄 Format Data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "🎨 Generate Branded Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔄 Format Data": {
+      "main": [
+        [
+          {
+            "node": "✅ Validate Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🎨 Generate Branded Image": {
+      "main": [
+        [
+          {
+            "node": "☁️ Upload Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "☁️ Upload Image": {
+      "main": [
+        [
+          {
+            "node": "✅ Validate Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "✅ Validate Content": {
+      "main": [
+        [
+          {
+            "node": "🐦 Post to X/Twitter",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "💼 Post to LinkedIn",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "📘 Post to Facebook",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "📸 Post to Instagram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1"
+}

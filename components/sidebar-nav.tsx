@@ -6,7 +6,7 @@ import { useState, useEffect } from "react"
 import { X, Home, Shield, Building2, Plane, MessageSquare, Info, ArrowRight, ExternalLink } from "lucide-react"
 import Link from "next/link"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { supabase } from "@/lib/supabase"
+import { useAuth } from "@/hooks/use-auth"
 import { isStaffMember, BITRIX_CRM_URL } from "@/lib/staff-config"
 
 interface SidebarNavProps {
@@ -25,24 +25,12 @@ const menuItems = [
 ]
 
 export function SidebarNav({ isOpen, onClose }: SidebarNavProps) {
-    const [user, setUser] = useState<any>(null)
+    const { user } = useAuth()
     const [showCRM, setShowCRM] = useState(false)
 
     useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            const currentUser = session?.user ?? null
-            setUser(currentUser)
-            setShowCRM(isStaffMember(currentUser?.email))
-        })
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            const currentUser = session?.user ?? null
-            setUser(currentUser)
-            setShowCRM(isStaffMember(currentUser?.email))
-        })
-
-        return () => subscription.unsubscribe()
-    }, [])
+        setShowCRM(isStaffMember(user?.email))
+    }, [user])
 
     const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
         if (href.startsWith("#")) {

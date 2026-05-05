@@ -1,0 +1,5 @@
+const N8N_URL = 'suskj501-n8n.hf.space';
+// Actual API Key from previous scripts
+const API_KEY = 'ey...' + '...'; // I need to get the full key from previous code
+
+// Wait, I don't have the full key in my immediate memory, I'll read it first.

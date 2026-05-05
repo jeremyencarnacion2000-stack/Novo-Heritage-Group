@@ -38,14 +38,8 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
-      const { registerUser } = await import("@/lib/supabase/functions")
-      const result = await registerUser({ email, password, name })
-
-      if (result.success) {
-        router.push("/login?message=registration-success")
-      } else {
-        alert(result.error || "Error al crear la cuenta")
-      }
+      // Temporarily disabled email registration during migration
+      alert("Por favor utilice el botón de Google para registrarse en esta fase de actualización.")
     } catch (error) {
       console.error("[Auth] Register error:", error)
       alert("Error al procesar el registro")
@@ -55,12 +49,15 @@ export default function RegisterPage() {
   }
 
   const handleGoogleLogin = async () => {
+    setIsLoading(true)
     try {
-      const { signInWithGoogle } = await import("@/lib/supabase/functions")
-      await signInWithGoogle()
+      const { signIn } = await import("next-auth/react")
+      await signIn("google", { callbackUrl: "/" })
     } catch (error) {
       console.error("[Auth] Google Login error:", error)
       alert("Error al conectar con Google")
+    } finally {
+      setIsLoading(false)
     }
   }
 

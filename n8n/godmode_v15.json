@@ -1,0 +1,680 @@
+{
+  "updatedAt": "2026-04-06T20:53:56.313Z",
+  "createdAt": "2026-04-06T20:53:56.313Z",
+  "id": "2an73cTYGEPQuW4Y",
+  "name": "[ELITE] Godmode Backfill V15 - SambaNova 405B 🏡🛡️💎",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes"
+            }
+          ]
+        }
+      },
+      "name": "Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ],
+      "id": "2560d16d-2061-494c-a990-8458e343c2af"
+    },
+    {
+      "parameters": {
+        "values": {
+          "number": [
+            {
+              "name": "offset",
+              "value": "={{$node[\"Split\"].context.currentRunIndex * 50}}"
+            }
+          ]
+        }
+      },
+      "name": "Calc_Offset",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ],
+      "id": "254949d3-c2c8-4a70-a1ec-17b1e304933a"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM evolution.\"Message\" ORDER BY \"messageTimestamp\" DESC LIMIT 50 OFFSET {{$json.offset}};"
+      },
+      "name": "Fetch_50",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        400,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ym3KfQZLjCvWmUjS",
+          "name": "Postgres account"
+        }
+      },
+      "id": "bff31cd2-b61a-474c-bfd9-f1a4fd4c7fbd"
+    },
+    {
+      "parameters": {
+        "batchSize": 1
+      },
+      "name": "Split",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        600,
+        300
+      ],
+      "id": "22ed67ab-f5a7-4d01-a9e6-fc1e1d97fd89"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"messageContent\"] || $json[\"message\"]?.[\"conversation\"] || \"\"}}",
+              "operation": "notEmpty"
+            }
+          ]
+        }
+      },
+      "name": "Filter_Text",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        800,
+        300
+      ],
+      "id": "89d1fb6a-daed-403a-b865-eeca95dff84b"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.sambanova.ai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "Meta-Llama-3.1-405B-Instruct-v1"
+            },
+            {
+              "name": "messages",
+              "value": "=[{\"role\": \"system\", \"content\": \"Expert Real Estate Analyst. Analyze this WhatsApp message. If it's a direct offer for sale or rent, extract structured JSON: 'proyecto', 'zona', 'comision', 'tipo' (Venta/Alquiler). If it is a generic question, 'Greetings', 'Search Request' (e.g., 'I am looking for...'), or spam, return proyecto: 'N/A'. You MUST be strict. Only genuine property listings allowed. Response must be ONLY valid JSON.\"}, {\"role\": \"user\", \"content\": \"{{($json['messageContent'] || $json['message']?.['conversation'] || 'N/A').replace(/[\\\"\\\\\\b\\f\\n\\r\\t]/g, '')}}\"}]"
+            },
+            {
+              "name": "temperature",
+              "value": "0.1"
+            },
+            {
+              "name": "response_format",
+              "value": "={ \"type\": \"json_object\" }"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "name": "SambaNova_405B_Logic",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1050,
+        200
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Bz3xfXM6claHNoqr"
+        }
+      },
+      "id": "a206333a-8e61-4841-8294-1025d93b63de"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"choices\"]?.[0]?.message?.content ? JSON.parse($json.choices[0].message.content).proyecto : \"N/A\"}}",
+              "operation": "notEqual",
+              "value2": "N/A"
+            }
+          ]
+        }
+      },
+      "name": "Is_Valid",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        200
+      ],
+      "id": "842929da-0f7b-492b-aed1-f7027ac588f7"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.inventario_digital (nombre_proyecto, zona, comision, tipo_activo, url_activo, stock_disponible) VALUES ('{{JSON.parse($node[\"SambaNova_405B_Logic\"].json.choices[0].message.content).proyecto.replace(/'/g, \"''\")}}', '{{(JSON.parse($node[\"SambaNova_405B_Logic\"].json.choices[0].message.content).zona || \"N/A\").replace(/'/g, \"''\")}}', '{{(JSON.parse($node[\"SambaNova_405B_Logic\"].json.choices[0].message.content).comision || \"N/A\").replace(/'/g, \"''\")}}', 'WhatsApp/EliteBackfill', '{{$node[\"Split\"].json[\"id\"]}}', true) ON CONFLICT (url_activo) DO UPDATE SET stock_disponible = EXCLUDED.stock_disponible;"
+      },
+      "name": "Save_Project",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        1450,
+        100
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ym3KfQZLjCvWmUjS",
+          "name": "Postgres account"
+        }
+      },
+      "id": "2ba4194f-1466-412a-9606-6b6389ba1afd"
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "seconds"
+      },
+      "name": "Cooldown",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        300
+      ],
+      "id": "b35cce13-e273-4664-a562-253699dd52c1",
+      "webhookId": "99b3c77c-09fc-4a87-9315-c049bd2cbaa8"
+    }
+  ],
+  "connections": {
+    "Trigger": {
+      "main": [
+        [
+          {
+            "node": "Calc_Offset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calc_Offset": {
+      "main": [
+        [
+          {
+            "node": "Fetch_50",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch_50": {
+      "main": [
+        [
+          {
+            "node": "Split",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split": {
+      "main": [
+        [
+          {
+            "node": "Filter_Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter_Text": {
+      "main": [
+        [
+          {
+            "node": "SambaNova_405B_Logic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "false": [
+        [
+          {
+            "node": "Cooldown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SambaNova_405B_Logic": {
+      "main": [
+        [
+          {
+            "node": "Is_Valid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is_Valid": {
+      "main": [
+        [
+          {
+            "node": "Save_Project",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "false": [
+        [
+          {
+            "node": "Cooldown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save_Project": {
+      "main": [
+        [
+          {
+            "node": "Cooldown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cooldown": {
+      "main": [
+        [
+          {
+            "node": "Calc_Offset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "50806bef-fc7d-4477-b44f-fbdb1e81d868",
+  "activeVersionId": "50806bef-fc7d-4477-b44f-fbdb1e81d868",
+  "versionCounter": 5,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-04-06T20:53:56.313Z",
+      "createdAt": "2026-04-06T20:53:56.313Z",
+      "role": "workflow:owner",
+      "workflowId": "2an73cTYGEPQuW4Y",
+      "projectId": "lPAtobNmuANXSVmX",
+      "project": {
+        "updatedAt": "2026-03-22T06:20:26.986Z",
+        "createdAt": "2026-03-22T06:09:18.450Z",
+        "id": "lPAtobNmuANXSVmX",
+        "name": "Angel Luis E.A. Encarnacion Alcantara <angelluis.encarnacion2000@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "f67f6042-11b7-4147-a373-585decca9153"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-04-06T20:53:56.342Z",
+    "createdAt": "2026-04-06T20:53:56.342Z",
+    "versionId": "50806bef-fc7d-4477-b44f-fbdb1e81d868",
+    "workflowId": "2an73cTYGEPQuW4Y",
+    "nodes": [
+      {
+        "parameters": {},
+        "name": "Trigger",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          300
+        ],
+        "id": "2560d16d-2061-494c-a990-8458e343c2af"
+      },
+      {
+        "parameters": {
+          "values": {
+            "number": [
+              {
+                "name": "offset",
+                "value": "={{$node[\"Split\"].context.currentRunIndex * 50}}"
+              }
+            ]
+          }
+        },
+        "name": "Calc_Offset",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 1,
+        "position": [
+          200,
+          300
+        ],
+        "id": "254949d3-c2c8-4a70-a1ec-17b1e304933a"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT * FROM evolution.\"Message\" ORDER BY \"messageTimestamp\" DESC LIMIT 50 OFFSET {{$json.offset}};"
+        },
+        "name": "Fetch_50",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 1,
+        "position": [
+          400,
+          300
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "ym3KfQZLjCvWmUjS",
+            "name": "Postgres account"
+          }
+        },
+        "id": "bff31cd2-b61a-474c-bfd9-f1a4fd4c7fbd"
+      },
+      {
+        "parameters": {
+          "batchSize": 1
+        },
+        "name": "Split",
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 1,
+        "position": [
+          600,
+          300
+        ],
+        "id": "22ed67ab-f5a7-4d01-a9e6-fc1e1d97fd89"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "string": [
+              {
+                "value1": "={{$json[\"messageContent\"] || $json[\"message\"]?.[\"conversation\"] || \"\"}}",
+                "operation": "notEmpty"
+              }
+            ]
+          }
+        },
+        "name": "Filter_Text",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 1,
+        "position": [
+          800,
+          300
+        ],
+        "id": "89d1fb6a-daed-403a-b865-eeca95dff84b"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.sambanova.ai/v1/chat/completions",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "model",
+                "value": "Meta-Llama-3.1-405B-Instruct-v1"
+              },
+              {
+                "name": "messages",
+                "value": "=[{\"role\": \"system\", \"content\": \"Expert Real Estate Analyst. Analyze this WhatsApp message. If it's a direct offer for sale or rent, extract structured JSON: 'proyecto', 'zona', 'comision', 'tipo' (Venta/Alquiler). If it is a generic question, 'Greetings', 'Search Request' (e.g., 'I am looking for...'), or spam, return proyecto: 'N/A'. You MUST be strict. Only genuine property listings allowed. Response must be ONLY valid JSON.\"}, {\"role\": \"user\", \"content\": \"{{($json['messageContent'] || $json['message']?.['conversation'] || 'N/A').replace(/[\\\"\\\\\\b\\f\\n\\r\\t]/g, '')}}\"}]"
+              },
+              {
+                "name": "temperature",
+                "value": "0.1"
+              },
+              {
+                "name": "response_format",
+                "value": "={ \"type\": \"json_object\" }"
+              }
+            ]
+          },
+          "options": {
+            "timeout": 60000
+          }
+        },
+        "name": "SambaNova_405B_Logic",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.1,
+        "position": [
+          1050,
+          200
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "Bz3xfXM6claHNoqr"
+          }
+        },
+        "id": "a206333a-8e61-4841-8294-1025d93b63de"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "string": [
+              {
+                "value1": "={{$json[\"choices\"]?.[0]?.message?.content ? JSON.parse($json.choices[0].message.content).proyecto : \"N/A\"}}",
+                "operation": "notEqual",
+                "value2": "N/A"
+              }
+            ]
+          }
+        },
+        "name": "Is_Valid",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 1,
+        "position": [
+          1250,
+          200
+        ],
+        "id": "842929da-0f7b-492b-aed1-f7027ac588f7"
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO public.inventario_digital (nombre_proyecto, zona, comision, tipo_activo, url_activo, stock_disponible) VALUES ('{{JSON.parse($node[\"SambaNova_405B_Logic\"].json.choices[0].message.content).proyecto.replace(/'/g, \"''\")}}', '{{(JSON.parse($node[\"SambaNova_405B_Logic\"].json.choices[0].message.content).zona || \"N/A\").replace(/'/g, \"''\")}}', '{{(JSON.parse($node[\"SambaNova_405B_Logic\"].json.choices[0].message.content).comision || \"N/A\").replace(/'/g, \"''\")}}', 'WhatsApp/EliteBackfill', '{{$node[\"Split\"].json[\"id\"]}}', true) ON CONFLICT (url_activo) DO UPDATE SET stock_disponible = EXCLUDED.stock_disponible;"
+        },
+        "name": "Save_Project",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 1,
+        "position": [
+          1450,
+          100
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "ym3KfQZLjCvWmUjS",
+            "name": "Postgres account"
+          }
+        },
+        "id": "2ba4194f-1466-412a-9606-6b6389ba1afd"
+      },
+      {
+        "parameters": {
+          "amount": 2,
+          "unit": "seconds"
+        },
+        "name": "Cooldown",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1,
+        "position": [
+          1600,
+          300
+        ],
+        "id": "b35cce13-e273-4664-a562-253699dd52c1",
+        "webhookId": "99b3c77c-09fc-4a87-9315-c049bd2cbaa8"
+      }
+    ],
+    "connections": {
+      "Trigger": {
+        "main": [
+          [
+            {
+              "node": "Calc_Offset",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Calc_Offset": {
+        "main": [
+          [
+            {
+              "node": "Fetch_50",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch_50": {
+        "main": [
+          [
+            {
+              "node": "Split",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Split": {
+        "main": [
+          [
+            {
+              "node": "Filter_Text",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Filter_Text": {
+        "main": [
+          [
+            {
+              "node": "SambaNova_405B_Logic",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ],
+        "false": [
+          [
+            {
+              "node": "Cooldown",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SambaNova_405B_Logic": {
+        "main": [
+          [
+            {
+              "node": "Is_Valid",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Is_Valid": {
+        "main": [
+          [
+            {
+              "node": "Save_Project",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ],
+        "false": [
+          [
+            {
+              "node": "Cooldown",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Save_Project": {
+        "main": [
+          [
+            {
+              "node": "Cooldown",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Cooldown": {
+        "main": [
+          [
+            {
+              "node": "Calc_Offset",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Angel Luis E.A. Encarnacion Alcantara",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-06T20:54:11.946Z",
+        "id": 353,
+        "workflowId": "2an73cTYGEPQuW4Y",
+        "versionId": "50806bef-fc7d-4477-b44f-fbdb1e81d868",
+        "event": "activated",
+        "userId": "f67f6042-11b7-4147-a373-585decca9153"
+      }
+    ]
+  }
+}

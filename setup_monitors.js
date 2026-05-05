@@ -33,7 +33,7 @@ async function run() {
 
   // 2. Check DB
   const { Client } = require('pg');
-  const c = new Client({ connectionString: 'postgresql://neondb_owner:npg_Yhvk2DzABn6P@ep-rapid-hill-adiehuvc-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require' });
+  const c = new Client({ connectionString: 'postgresql://angel:NegdPai-zZFnyyNsT2jdmg@long-dwarf-15398.jxf.gcp-us-east1.cockroachlabs.cloud:26257/defaultdb?sslmode=verify-full' });
   await c.connect();
   
   const inv = await c.query('SELECT COUNT(*) as total FROM public.inventario_digital');

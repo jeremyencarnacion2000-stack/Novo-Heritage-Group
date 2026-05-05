@@ -1,0 +1,21 @@
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://openrouter.ai/api/v1",
+    "ANTHROPIC_API_KEY": "TU_API_KEY_DE_OPENROUTER",
+    "ANTHROPIC_MODEL": "google/gemini-2.5-flash:free"
+  }
+}
+
+
+
+{
+  "permissions": {
+    "allow": [
+      "Read(//tmp/agent-browser/**)",
+      "Bash(curl -L -o agent-browser-win32-x64.exe \"https://github.com/vercel-labs/agent-browser/releases/download/v0.26.0/agent-browser-win32-x64.exe\")",
+      "Bash(chmod +x agent-browser-win32-x64.exe)",
+      "Bash(./agent-browser-win32-x64.exe --help)",
+      "Bash(./agent-browser-win32-x64.exe open *)"
+    ]
+  }
+}

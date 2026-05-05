@@ -104,7 +104,7 @@ export default function PropertyDetailModal({ open, onOpenChange, property }: Pr
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="max-w-7xl h-[90vh] p-0 bg-background border-border/50 overflow-hidden">
+      <SheetContent side="right" className="w-[95vw] sm:max-w-2xl lg:max-w-4xl h-[100dvh] md:h-[95vh] mt-auto p-0 bg-background border-border/50 overflow-y-auto shadow-premium-lg md:rounded-tl-3xl border-r-0 border-y-0">
         <SheetHeader className="p-6 border-b">
           <SheetTitle className="text-2xl font-bold text-foreground">
             {property.title}

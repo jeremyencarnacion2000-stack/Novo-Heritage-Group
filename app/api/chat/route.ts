@@ -1,6 +1,7 @@
 import { streamText } from "ai"
 import { createOpenAI } from "@ai-sdk/openai"
-import sql from "@/lib/db"
+import neonSql from "@/lib/db"
+import cockroachDb from "@/lib/cockroach-db"
 
 // SambaNova Client (Llama 3.1 405B for Elite Reasoning)
 const sambanova = createOpenAI({
@@ -13,11 +14,14 @@ export const maxDuration = 45
 export async function POST(req: Request) {
   const { messages, userId } = await req.json()
 
-  // 1. Fetch User Profile for Hyper-Personalization
+  // Detect if any message has an attachment (Vision task)
+  const hasImage = messages.some((msg: any) => msg.experimental_attachments && msg.experimental_attachments.length > 0);
+
+  // 1. Fetch User Profile from Neon (auth/profiles DB)
   let userContext = "";
-  if (userId) {
+  if (userId && userId !== "anonymous") {
     try {
-      const [profile] = await sql`SELECT * FROM perfil_usuario WHERE usuario_id = ${userId} LIMIT 1`;
+      const [profile] = await neonSql`SELECT * FROM perfil_usuario WHERE usuario_id = ${userId} LIMIT 1`;
       if (profile) {
         userContext = `\n\n**PERFIL DEL CLIENTE:**
 - Intereses: ${JSON.stringify(profile.intereses)}
@@ -30,32 +34,52 @@ Personaliza tu respuesta basándote en que el usuario ya ha mostrado interés en
     }
   }
 
-  // 2. RAG: Fetch Real-Time Inventory for Recommendations
+  // 2. RAG: Fetch Real-Time Inventory from CockroachDB (properties DB)
   let inventoryContext = "";
   try {
-    const lastMessage = messages[messages.length - 1].content.toLowerCase();
+    const lastMessage = messages[messages.length - 1].content || "";
+    const lastMessageLower = typeof lastMessage === 'string' ? lastMessage.toLowerCase() : "";
     
-    // Simple Semantic-ish Filter: if user asks for specific location or type
-    let query = sql`SELECT title, price, location, sector, bedrooms, bathrooms FROM properties WHERE is_published = true `;
+    let listings: any[] = [];
     
-    if (lastMessage.includes("piantini") || lastMessage.includes("naco") || lastMessage.includes("punta cana")) {
-        const sector = lastMessage.includes("piantini") ? "Piantini" : lastMessage.includes("naco") ? "Naco" : "Punta Cana";
-        query = sql`${query} AND sector ILIKE ${'%' + sector + '%'}`;
+    // Location-aware filtering
+    const locations = ["piantini", "naco", "punta cana", "cap cana", "bavaro"];
+    const foundLocation = locations.find(loc => lastMessageLower.includes(loc));
+
+    if (foundLocation) {
+      const sector = foundLocation.charAt(0).toUpperCase() + foundLocation.slice(1);
+      listings = await cockroachDb`
+        SELECT nombre_proyecto, precio, zona, descripcion_limpia, es_constructora_oficial 
+        FROM public.inventario_digital 
+        WHERE nombre_proyecto NOT IN ('Sin nombre', 'Parseo fallido', 'No disponible', '')
+          AND zona ILIKE ${'%' + sector + '%'}
+        ORDER BY id DESC LIMIT 5
+      `;
+    } else {
+      // General inventory
+      listings = await cockroachDb`
+        SELECT nombre_proyecto, precio, zona, descripcion_limpia, es_constructora_oficial 
+        FROM public.inventario_digital 
+        WHERE nombre_proyecto NOT IN ('Sin nombre', 'Parseo fallido', 'No disponible', '')
+          AND descripcion_limpia IS NOT NULL
+          AND LENGTH(descripcion_limpia) > 10
+        ORDER BY id DESC LIMIT 5
+      `;
     }
     
-    const listings = await sql`${query} ORDER BY created_at DESC LIMIT 3`;
-    
     if (listings.length > 0) {
-      inventoryContext = `\n\n**INVENTARIO DISPONIBLE EN TIEMPO REAL:**
-${listings.map(l => `- ${l.title} en ${l.sector}: US$ ${l.price.toLocaleString()} (${l.bedrooms} Hab / ${l.bathrooms} Baños)`).join('\n')}
+      inventoryContext = `\n\n**INVENTARIO DISPONIBLE EN TIEMPO REAL (CockroachDB):**
+${listings.map((l: any) => `- ${l.nombre_proyecto} en ${l.zona}: ${l.precio} ${l.es_constructora_oficial ? '✅ Constructora Oficial' : ''}\n  ${(l.descripcion_limpia || '').substring(0, 100)}`).join('\n')}
 Menciona estas opciones específicas si encajan con lo que busca el usuario.`;
     }
   } catch (e) {
     console.error("Inventory RAG failed:", e);
   }
 
+  const modelName = hasImage ? "Llama-3.2-11B-Vision-Instruct" : "Meta-Llama-3.1-405B-Instruct";
+
   const result = streamText({
-    model: sambanova("Meta-Llama-3.1-405B-Instruct"),
+    model: sambanova(modelName) as any,
     system: `Eres "Novo AI", el asistente inteligente de Novo Heritage Group. Tu objetivo es asesorar a clientes de alto nivel en República Dominicana sobre Bienes Raíces, Seguros y Turismo.
 
 **DIRECTIVAS DE NOVO AI:**
@@ -63,6 +87,7 @@ Menciona estas opciones específicas si encajan con lo que busca el usuario.`;
 2. **Mentalidad de Inversor:** Si hablan de bienes raíces, enfócate en plusvalía y retorno de inversión (ROI).
 3. **Conversión Intuitiva:** Si el usuario pregunta por algo general, guíalo hacia una recomendación específica de nuestro inventario real.
 4. **Tono:** Ejecutivo, fluido, sofisticado y servicial.
+${hasImage ? "5. **Análisis de Visión:** Si el usuario envía una imagen, analízala con detalle técnico (arquitectura, acabados, ubicación probable) y relaciónala con nuestro catálogo si es posible." : ""}
 
 ${userContext}
 ${inventoryContext}

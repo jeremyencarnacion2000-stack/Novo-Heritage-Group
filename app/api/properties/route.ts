@@ -1,16 +1,28 @@
 import { NextResponse } from "next/server"
-import sql from "@/lib/db"
+import cockroachDb from "@/lib/cockroach-db"
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function GET() {
   try {
-    const data = await sql`
-      SELECT 
-        id, title, price, transaction_type, type, location, city, sector, 
-        bedrooms, bathrooms, area, description, features, image, is_published, created_at
-      FROM properties 
-      ORDER BY created_at DESC 
+    // Fetch from CockroachDB inventario_digital (populated by n8n multimedia ingestor)
+    const data = await cockroachDb`
+      SELECT
+        id,
+        nombre_proyecto,
+        titulo_profesional,
+        descripcion_limpia,
+        es_constructora_oficial,
+        zona,
+        precio,
+        multimedia
+      FROM public.inventario_digital
+      WHERE nombre_proyecto IS NOT NULL
+        AND nombre_proyecto NOT IN ('Sin nombre', 'Parseo fallido', 'No disponible', '')
+        AND descripcion_limpia IS NOT NULL
+        AND LENGTH(descripcion_limpia) > 5
+      ORDER BY id DESC
       LIMIT 100
     `;
 
@@ -18,44 +30,72 @@ export async function GET() {
       return NextResponse.json([])
     }
 
-    const mapped = (data || []).map((p) => {
-      const price = parseFloat(p.price) || 0;
-      const images = p.image ? [p.image] : ["/luxury-modern-villa-renaissance.png"];
-      const primaryImage = images[0];
+    const mapped = (data || []).map((p: any) => {
+      // Parse price string to number
+      let priceNum = 0;
+      if (p.precio) {
+        const cleaned = String(p.precio).replace(/[^0-9.,]/g, '').replace(',', '.');
+        priceNum = parseFloat(cleaned) || 0;
+      }
 
-      return ({
+      // Parse multimedia JSON and transform Dropbox links for direct rendering
+      let images: string[] = [];
+      try {
+        const parsed = typeof p.multimedia === 'string' ? JSON.parse(p.multimedia) : (p.multimedia || []);
+        if (Array.isArray(parsed)) {
+          images = parsed
+            .filter((u: string) => u && u.startsWith('http'))
+            .map((u: string) => {
+              if (u.includes('dropbox.com')) {
+                return u.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '').replace('?dl=1', '');
+              }
+              return u;
+            });
+        }
+      } catch { /* ignore */ }
+
+      const primaryImage = images[0] || "/luxury-modern-villa-renaissance.png";
+
+      return {
         id: String(p.id),
-        title: p.title || "Propiedad Novo Heritage",
-        location: p.location || "República Dominicana",
-        address: p.sector || p.city || p.location || "Ubicación Premium",
+        title: p.nombre_proyecto || "Propiedad Novo Heritage",
+        location: p.zona || "República Dominicana",
+        address: p.zona || "Ubicación Premium",
         status: 'available',
-        price,
-        type: p.type?.toLowerCase() || "apartamento",
-        bedrooms: p.bedrooms || 3,
-        bathrooms: p.bathrooms || 2,
-        area: p.area || 120,
-        yearBuilt: new Date(p.created_at || Date.now()).getFullYear(),
-        description: p.description || "Residencia exclusiva gestionada por Novo Heritage Group.",
-        features: Array.isArray(p.features) ? p.features : ["Seguridad 24/7", "Premium Finish"],
+        price: priceNum,
+        priceLabel: p.precio || 'Consultar',
+        type: "propiedad",
+        bedrooms: 3,
+        bathrooms: 2,
+        area: 120,
+        sqft: 1292,
+        yearBuilt: new Date().getFullYear(),
+        description: p.descripcion_limpia || "Propiedad gestionada por Novo Heritage Group.",
+        features: p.es_constructora_oficial ? ["Constructora Oficial", "Proyecto Verificado"] : ["Verificación Pendiente"],
         agent: {
           name: 'Novo Heritage Real Estate',
           phone: '+1 809-555-0123',
         },
         image: primaryImage,
-        images: images,
-        reference: `NH-ID${String(p.id).substring(0,8)}`,
-        featured: !!p.title.toLowerCase().includes("lujo"), 
-        city: p.city || 'Santo Domingo',
-        sector: p.sector || 'N/A',
-        parking: parseInt(String(p.parking || "1")),
-        amenities: Array.isArray(p.features) ? p.features : [],
-        transactionType: p.transaction_type?.toLowerCase() || 'venta',
-      })
+        images: images.length > 0 ? images : [primaryImage],
+        reference: `NH-${String(p.id).padStart(4, '0')}`,
+        featured: p.es_constructora_oficial === true,
+        city: p.zona || 'Santo Domingo',
+        sector: p.zona || 'N/A',
+        parking: 1,
+        amenities: [],
+        transactionType: 'venta',
+        isOfficial: p.es_constructora_oficial,
+        subtitle: p.titulo_profesional || '',
+      }
     })
 
     return NextResponse.json(mapped)
   } catch (err) {
-    console.error('Neon properties fetch failed:', err)
-    return NextResponse.json([])
+    console.error('Properties fetch error:', err)
+    return NextResponse.json(
+      { error: "Error al cargar propiedades" },
+      { status: 500 }
+    )
   }
 }

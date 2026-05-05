@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
-import { registrarHistorialSimple } from '@/lib/supabase/functions'
+import { trackBehavior } from '@/lib/tracking'
 
 interface UseHistorialTrackerOptions {
   userId?: string
@@ -52,9 +52,13 @@ export function useHistorialTracker(options: UseHistorialTrackerOptions = {}) {
     const seccion = getSectionFromPath(pathname)
 
     // Track page view
-    registrarHistorialSimple(userId, seccion, customAction || 'page_view').catch(error => {
+    trackBehavior({
+      usuario_id: userId,
+      evento: customAction === 'page_view' ? 'view' : 'stay',
+      seccion: seccion,
+      metadata: { path: pathname, action: customAction }
+    }).catch(error => {
       console.error('Error tracking page view:', error)
-      // Don't throw error to avoid breaking the app
     })
 
   }, [pathname, userId, enabled, trackPageViews, customAction])
@@ -75,7 +79,12 @@ export function useHistorialTracker(options: UseHistorialTrackerOptions = {}) {
           try {
             const details = trackDetails ? JSON.parse(trackDetails) : {}
 
-            await registrarHistorialSimple(userId, trackAction, 'click')
+            await trackBehavior({
+              usuario_id: userId,
+              evento: 'click',
+              seccion: trackAction,
+              metadata: details
+            })
           } catch (error) {
             console.error('Error tracking click:', error)
           }

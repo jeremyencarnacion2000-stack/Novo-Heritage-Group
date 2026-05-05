@@ -1,41 +1,60 @@
 import NextAuth from "next-auth"
 import Google from "next-auth/providers/google"
-import PostgresAdapter from "@auth/pg-adapter"
-import { Pool } from "pg"
+import postgres from "postgres"
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
+const getSql = () => {
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    console.warn("[Auth] DATABASE_URL is missing. Database sync disabled.");
+    return null;
   }
-})
+  return postgres(url, { ssl: 'require' });
+};
+
+// Build-safe: only configure Google if secrets are available
+const providers: any[] = [];
+if (process.env.GOOGLE_CLIENT_SECRET) {
+  providers.push(
+    Google({
+      clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    })
+  );
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PostgresAdapter(pool),
-  providers: [
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET,
-      authorization: {
-        params: {
-          prompt: "consent",
-          access_type: "offline",
-          response_type: "code"
-        }
-      }
-    })
-  ],
+  providers,
   callbacks: {
-    async session({ session, user }: any) {
-      if (session.user) {
-        session.user.id = user.id
+    async signIn({ user, account, profile }) {
+      if (!user.email) return false;
+
+      const sql = getSql();
+      if (!sql) return true;  // Permitimos sin BD en dev
+
+      try {
+        await sql`
+          INSERT INTO users (email, name, image, last_login)
+          VALUES (${user.email}, ${user.name || ''}, ${user.image || ''}, NOW())
+          ON CONFLICT (email)
+          DO UPDATE SET
+            name = EXCLUDED.name,
+            image = EXCLUDED.image,
+            last_login = NOW()
+        `;
+        return true;
+      } catch (error) {
+        console.error("[Auth] Error sincronizando usuario a Neon:", error);
+        return true;
       }
-      return session
+    },
+    async session({ session, token }) {
+      if (session.user && token.sub) {
+        (session.user as any).id = token.sub;
+      }
+      return session;
     },
   },
   pages: {
     signIn: "/login",
   },
-  secret: process.env.AUTH_SECRET,
-  trustHost: true
-})
+});

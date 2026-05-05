@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { useChat } from "@ai-sdk/react"
-import { DefaultChatTransport } from "ai"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 // @ts-ignore - lucide-react types not resolving correctly
@@ -25,9 +25,12 @@ export function AdvancedChatbot() {
   const [isSpeaking, setIsSpeaking] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const { messages: aiMessages, sendMessage, status } = useChat({
-    transport: new DefaultChatTransport({ api: "/api/chat" }),
-  })
+  const { messages: aiMessages, append, isLoading } = useChat({
+    api: "/api/chat",
+  }) as any
+
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -38,18 +41,14 @@ export function AdvancedChatbot() {
   useEffect(() => {
     if (aiMessages.length > 0) {
       const lastMessage = aiMessages[aiMessages.length - 1]
-      const messageContent = lastMessage.parts
-        .filter((part) => part.type === "text")
-        .map((part) => (part as any).text)
-        .join("")
-
-      if (messageContent && !messages.some((m) => m.content === messageContent)) {
+      // Use id check to avoid duplicate messages in state
+      if (lastMessage.role === "assistant" && !messages.some((m) => m.id === lastMessage.id)) {
         setMessages((prev) => [
           ...prev,
           {
             id: lastMessage.id,
-            role: lastMessage.role as "user" | "assistant",
-            content: messageContent,
+            role: "assistant",
+            content: lastMessage.content,
             timestamp: new Date(),
           },
         ])
@@ -57,24 +56,62 @@ export function AdvancedChatbot() {
     }
   }, [aiMessages])
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("La imagen es demasiado grande (máx 5MB)")
+        return
+      }
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setSelectedImage(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const input = e.currentTarget.message.value
-    if (!input.trim()) return
+    const form = e.currentTarget
+    const input = (form.elements.namedItem("message") as HTMLInputElement).value
+    if (!input.trim() && !selectedImage) return
 
-    // Add user message
+    const userMessageId = Date.now().toString()
+    
+    // Add user message to local state
     setMessages((prev) => [
       ...prev,
       {
-        id: Date.now().toString(),
+        id: userMessageId,
         role: "user",
-        content: input,
+        content: input || (selectedImage ? "[Imagen]" : ""),
         timestamp: new Date(),
       },
     ])
 
-    sendMessage({ text: input })
-    e.currentTarget.message.value = ""
+    if (selectedImage) {
+      // Send message with image attachment
+      append({
+        role: "user",
+        content: input,
+        experimental_attachments: [
+          {
+            name: "upload.jpg",
+            contentType: "image/jpeg",
+            url: selectedImage,
+          }
+        ]
+      })
+    } else {
+      append({
+        role: "user",
+        content: input,
+      })
+    }
+
+    form.reset()
+    setSelectedImage(null)
   }
 
   const handleSpeak = (text: string) => {
@@ -204,7 +241,7 @@ export function AdvancedChatbot() {
               </div>
             ))}
 
-            {status === "streaming" && (
+            {isLoading && (
               <div className="flex justify-start animate-in fade-in">
                 <div className="bg-muted rounded-2xl px-4 py-2.5 border border-border">
                   <div className="flex gap-1">
@@ -219,26 +256,55 @@ export function AdvancedChatbot() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
-          <form onSubmit={handleSubmit} className="p-4 border-t border-border bg-background/50 backdrop-blur-sm">
-            <div className="flex gap-2">
+          {/* Input Area */}
+          <div className="p-4 border-t border-border bg-background/50 backdrop-blur-sm space-y-2">
+            {selectedImage && (
+              <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-primary/20 animate-in zoom-in">
+                <img src={selectedImage} alt="Preview" className="w-full h-full object-cover" />
+                <button 
+                  type="button"
+                  onClick={() => setSelectedImage(null)}
+                  className="absolute top-1 right-1 bg-background/80 rounded-full p-0.5"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+            <form onSubmit={handleSubmit} className="flex gap-2">
+              <input 
+                type="file" 
+                accept="image/*" 
+                className="hidden" 
+                ref={fileInputRef} 
+                onChange={handleImageSelect}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex-shrink-0 border-border/50 hover:bg-muted"
+                disabled={isLoading}
+              >
+                <Sparkles className="w-4 h-4 text-primary" />
+              </Button>
               <Input
                 name="message"
                 placeholder="Escribe tu pregunta..."
-                disabled={status === "streaming"}
+                disabled={isLoading}
                 className="flex-1 bg-background/80 border-border/50 focus:border-primary"
                 autoComplete="off"
               />
               <Button
                 type="submit"
                 size="icon"
-                disabled={status === "streaming"}
+                disabled={isLoading}
                 className="flex-shrink-0 bg-gradient-to-br from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
               >
                 <Send className="w-4 h-4" />
               </Button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       )}
     </>

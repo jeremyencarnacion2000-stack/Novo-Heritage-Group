@@ -1,6 +1,6 @@
 import { Metadata } from "next"
 import { PropertyDetailClient } from "@/components/property-detail-client"
-import sql from "@/lib/db"
+import sql from "@/lib/railway-db"
 
 interface Props {
   params: { id: string }

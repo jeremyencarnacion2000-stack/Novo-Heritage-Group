@@ -10,28 +10,20 @@ import { Input } from "@/components/ui/input"
 import { MessageCircle, X, Send, Sparkles, ShieldCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
-import { supabase } from "@/lib/supabase"
+import { useAuth } from "@/hooks/use-auth"
 
 export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false)
-  const [user, setUser] = useState<any>(null)
+  const { user, status } = useAuth()
   
-  // 1. Get real-time session for personalization
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-    })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
-    return () => subscription.unsubscribe()
-  }, [])
+  // Custom states can be removed as we use the hook
+  const userName = user?.name || user?.email?.split('@')[0] || "Invitado"
 
   // Force ANY to bypass the AI SDK type mismatches on build
   const chatProps: any = {
     api: '/api/chat',
     body: {
-      userId: user?.id
+      userId: (user as any)?.id
     }
   }
 
@@ -48,8 +40,6 @@ export default function Chatbot() {
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
   }, [aiMessages, isLoading])
-
-  const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || "Invitado"
 
   return (
     <>

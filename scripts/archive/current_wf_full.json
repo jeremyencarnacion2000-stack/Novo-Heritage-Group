@@ -1,0 +1,313 @@
+{
+  "updatedAt": "2026-05-03T15:01:32.271Z",
+  "createdAt": "2026-05-03T00:03:13.055Z",
+  "id": "tNfL2APn3vXKgTea",
+  "name": "[PROD] Ingestor Multimedia v7.0 (Reconstrucción Total)",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "start-node",
+      "name": "Iniciar la ingesta",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        200,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM evolution.\"Message\" WHERE \"message\"->>'imageMessage' IS NOT NULL ORDER BY \"messageTimestamp\" DESC LIMIT 1;",
+        "options": {}
+      },
+      "id": "fetch-node",
+      "name": "Obtener mensajes",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        400,
+        400
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "ym3KfQZLjCvWmUjS",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ !!($json.message && ($json.message.imageMessage || $json.message.videoMessage)) }}",
+              "value2": true
+            }
+          ]
+        },
+        "value1": "={{ $node[\"WhatsApp_SQL_Source\"].json.mediaType }}"
+      },
+      "id": "filter-node",
+      "name": "¿Tiene medios?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        600,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://wasa-el6v.onrender.com/chat/getBase64FromMedia",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ instance: $json.instanceId, message: $json.message }) }}",
+        "options": {}
+      },
+      "id": "download-node",
+      "name": "Descargar contenido",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        800,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "KwSuSbN8o5BztaZX",
+          "name": "Header Auth account 3"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://content.dropboxapi.com/2/files/upload",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Dropbox-API-Arg",
+              "value": "={{ JSON.stringify({ \"path\": \"/NovosHeritage/\" + ($json.pushName || \"Media\") + \"/\" + $json.key.id + \".jpg\", \"mode\": \"add\", \"autorename\": true }) }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/octet-stream"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "id": "dropbox-node",
+      "name": "Carga a Dropbox",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1200,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "KwSuSbN8o5BztaZX",
+          "name": "Header Auth account 3"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.inventario_digital \n  (nombre_proyecto, titulo_profesional, descripcion_limpia, es_constructora_oficial, zona, precio, multimedia)\nVALUES (\n  '{{ JSON.parse($json.choices[0].message.content).nombre }}',\n  '{{ JSON.parse($json.choices[0].message.content).titulo }}',\n  '{{ JSON.parse($json.choices[0].message.content).descripcion }}',\n  {{ JSON.parse($json.choices[0].message.content).es_oficial || false }},\n  '{{ JSON.parse($json.choices[0].message.content).zona }}',\n  '{{ JSON.parse($json.choices[0].message.content).precio }}',\n  '{{ JSON.stringify(($node[\"Carga a Dropbox\"] && $node[\"Carga a Dropbox\"].json && $node[\"Carga a Dropbox\"].json.id) ? [\"https://dl.dropboxusercontent.com/s/\" + $node[\"Carga a Dropbox\"].json.id] : []) }}'::jsonb\n)\nON CONFLICT (nombre_proyecto) DO UPDATE SET\n  multimedia = COALESCE(inventario_digital.multimedia, '[]'::jsonb) || EXCLUDED.multimedia,\n  fecha_actualizacion = NOW();",
+        "options": {}
+      },
+      "id": "db-node",
+      "name": "Guardar en Cockroach",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        1500,
+        400
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "Rh6pnnREWkX5ExUN",
+          "name": "Postgres account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst input = $json;\n\n// Check if input is empty or an error object from Axios/Evolution\nif (!input || input.message === 'AxiosError' || input.status === 500) {\n    // If it's an error, we return an empty binary but DON'T stop the workflow\n    // The next node (Dropbox) will fail but we will set 'Continue on Fail' there\n    return {\n        error: \"Media expired or download failed\",\n        skip: true\n    };\n}\n\nlet base64Data = null;\nconst keys = Object.keys(input);\n\nfor (const key of keys) {\n    if (typeof input[key] === 'string' && (input[key].length > 1000 || input[key].includes(';base64,'))) {\n        base64Data = input[key];\n        break;\n    }\n}\n\nif (!base64Data) {\n    return { error: \"No base64 found\", skip: true };\n}\n\nconst cleanBase64 = base64Data.includes(',') ? base64Data.split(',').pop() : base64Data;\n\nreturn {\n  binary: {\n    data: {\n        data: cleanBase64,\n        mimeType: 'image/jpeg',\n        fileName: 'propiedad.jpg'\n    }\n  }\n};"
+      },
+      "id": "master-converter",
+      "name": "Traductor Maestro",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        300
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.sambanova.ai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"Meta-Llama-3.1-70B-Instruct\", stream: false, temperature: 0.1, messages: [{ role: \"system\", content: \"Eres un experto inmobiliario. Analiza el siguiente mensaje de WhatsApp y extrae los datos de la propiedad en formato JSON con estos campos: titulo, descripcion (sin contactos ni telefonos), precio, ubicacion, caracteristicas, tipo_propiedad, estado. Si es de constructora oficial pon es_oficial: true, sino false.\" }, { role: \"user\", content: $node[\"Obtener mensajes\"].json.message || \"sin mensaje\" }] }) }}",
+        "options": {}
+      },
+      "id": "final-ai-node",
+      "name": "Análisis de IA (SambaNova)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1300,
+        400
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "KwSuSbN8o5BztaZX",
+          "name": "Header Auth account 3"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Iniciar la ingesta": {
+      "main": [
+        [
+          {
+            "node": "Obtener mensajes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener mensajes": {
+      "main": [
+        [
+          {
+            "node": "¿Tiene medios?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Tiene medios?": {
+      "main": [
+        [
+          {
+            "node": "Descargar contenido",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Análisis de IA (SambaNova)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Descargar contenido": {
+      "main": [
+        [
+          {
+            "node": "Traductor Maestro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Traductor Maestro": {
+      "main": [
+        [
+          {
+            "node": "Carga a Dropbox",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Carga a Dropbox": {
+      "main": [
+        [
+          {
+            "node": "Análisis de IA (SambaNova)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Análisis de IA (SambaNova)": {
+      "main": [
+        [
+          {
+            "node": "Guardar en Cockroach",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "b1e78002-45a4-4947-bb07-883b96dfdb47",
+  "activeVersionId": null,
+  "versionCounter": 60,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-05-03T00:03:13.055Z",
+      "createdAt": "2026-05-03T00:03:13.055Z",
+      "role": "workflow:owner",
+      "workflowId": "tNfL2APn3vXKgTea",
+      "projectId": "lPAtobNmuANXSVmX",
+      "project": {
+        "updatedAt": "2026-03-22T06:20:26.986Z",
+        "createdAt": "2026-03-22T06:09:18.450Z",
+        "id": "lPAtobNmuANXSVmX",
+        "name": "Angel Luis E.A. Encarnacion Alcantara <angelluis.encarnacion2000@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "f67f6042-11b7-4147-a373-585decca9153"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

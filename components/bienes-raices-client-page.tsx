@@ -14,9 +14,8 @@ import { MobileHeader } from "@/components/mobile-header"
 import { Footer } from "@/components/footer"
 import Chatbot from "@/components/chatbot"
 import { SidebarNav } from "./sidebar-nav"
-import PropertyDetailModal from "@/components/property-detail-modal"
 import { trackBehavior } from "@/lib/tracking"
-import { supabase } from "@/lib/supabase"
+import { useAuth } from "@/hooks/use-auth"
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { PropertyCarousel } from "@/components/property-carousel"
@@ -25,6 +24,7 @@ import { PropertySellForm } from "@/components/forms/property-sell-form"
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { BookingForms } from "@/components/booking-forms"
 import { PremiumHeading, PremiumText } from "@/components/premium-typography"
+import PropertyDetailModal from "@/components/property-detail-modal"
 
 const ParallaxCard = ({ children, image, title, className, onClick, overlayOpacity = 0.4 }: any) => {
   const ref = React.useRef(null)
@@ -66,6 +66,7 @@ const ParallaxCard = ({ children, image, title, className, onClick, overlayOpaci
 }
 
 export default function BienesRaicesClientPage() {
+  const { user } = useAuth()
   const [searchQuery, setSearchQuery] = useState<string>("")
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 15000000])
   const [isScrolled, setIsScrolled] = useState(false)
@@ -75,6 +76,7 @@ export default function BienesRaicesClientPage() {
   const [isLoadingProps, setIsLoadingProps] = useState<boolean>(true)
   const [activeScene, setActiveScene] = useState<'hero' | 'gallery'>('hero')
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+
   
   const [services, setServices] = useState<any[]>([
     {
@@ -300,10 +302,9 @@ export default function BienesRaicesClientPage() {
                           setIsDetailModalOpen(true);
                           
                           // Tracking behavioral data for AI profiling
-                          const { data: { user } } = await supabase.auth.getUser();
                           if (user) {
                             trackBehavior({
-                              usuario_id: user.id,
+                              usuario_id: (user as any).id,
                               evento: 'click',
                               seccion: 'bienes-raices',
                               metadata: {
