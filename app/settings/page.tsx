@@ -25,6 +25,7 @@ import {
 import Link from "next/link"
 import { useTheme } from "next-themes"
 import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/hooks/use-auth"
 
 interface UserSettings {
   theme: "light" | "dark" | "system"
@@ -46,16 +47,18 @@ export default function SettingsPage() {
   const { toast } = useToast()
   const [focusedInput, setFocusedInput] = useState<string | null>(null)
 
+  const { user } = useAuth()
+
   const [settings, setSettings] = useState<UserSettings>({
     theme: "system",
     notifications: true,
     emailNotifications: true,
     language: "es",
     privacy: "public",
-    name: "Usuario Demo",
-    email: "usuario@novoheritage.com",
-    phone: "+1 (809) 555-0123",
-    bio: "Cliente premium de Novo Heritage especializado en seguros y bienes raíces."
+    name: "Cargando...",
+    email: "...",
+    phone: "",
+    bio: ""
   })
 
   useEffect(() => {
@@ -65,6 +68,19 @@ export default function SettingsPage() {
       setSettings(JSON.parse(savedSettings))
     }
   }, [])
+
+  useEffect(() => {
+    if (user) {
+      setSettings(prev => ({
+        ...prev,
+        name: user.name || prev.name,
+        email: user.email || prev.email,
+        // Fallbacks if not in session yet
+        phone: (user as any).phone || prev.phone || "",
+        bio: (user as any).bio || prev.bio || ""
+      }))
+    }
+  }, [user])
 
   const handleSave = async () => {
     setIsLoading(true)
