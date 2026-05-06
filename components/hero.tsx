@@ -53,9 +53,6 @@ export function Hero({ introFinished, onIntroComplete }: HeroProps) {
           className={`absolute inset-0 h-full w-full object-cover scale-150 blur-3xl md:hidden transition-opacity duration-1500 ease-out ${videoLoaded ? "opacity-100" : "opacity-0"}`}
           style={{ transform: "translateZ(0)", backfaceVisibility: "hidden" }}
         />
-        {/* Subtle vignette to preserve white text readability against bright video background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent h-40 z-[1]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent h-40 bottom-0 z-[1]" />
 
         {/* Main sharp video wrapper allows exact tracking of bottom-right watermark */}
         <div className="absolute inset-0 z-[2] flex flex-col items-center justify-center pointer-events-none">
