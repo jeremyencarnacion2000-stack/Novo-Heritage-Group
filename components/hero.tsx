@@ -54,7 +54,8 @@ export function Hero({ introFinished, onIntroComplete }: HeroProps) {
           style={{ transform: "translateZ(0)", backfaceVisibility: "hidden" }}
         />
         {/* Subtle vignette to preserve white text readability against bright video background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/60 md:hidden z-[1]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/20 to-transparent h-1/2 z-[1]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent h-1/2 bottom-0 z-[1]" />
 
         {/* Main sharp video wrapper allows exact tracking of bottom-right watermark */}
         <div className="absolute inset-0 z-[2] flex flex-col items-center justify-center pointer-events-none">
@@ -99,10 +100,10 @@ export function Hero({ introFinished, onIntroComplete }: HeroProps) {
                 transition={{ delay: 0.5, duration: 1, ease: "easeOut" }}
                 className="absolute top-32 md:top-40 left-6 md:left-8 pointer-events-auto"
               >
-                <p className="premium-label mb-3 text-[10px] md:text-xs">
+                <p className="premium-label mb-3 text-[10px] md:text-xs font-bold [text-shadow:_0_1px_10px_rgb(0_0_0_/_40%)]">
                   Arquitectura & Estilo
                 </p>
-                <div className="w-16 h-[0.5px] bg-primary/60" />
+                <div className="w-16 h-[0.5px] bg-primary/80 shadow-[0_0_10px_rgba(var(--primary),0.5)]" />
               </motion.div>
   
               {/* Bottom Left: Get Started - Refined Luxury Styling */}
@@ -139,7 +140,7 @@ export function Hero({ introFinished, onIntroComplete }: HeroProps) {
                     initial={{ opacity: 0, x: 30 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 1.4 + chip.delay, duration: 0.8 }}
-                    className="px-6 md:px-10 py-2.5 md:py-3 glass-architectural text-[8px] md:text-[10px] font-bold uppercase tracking-[0.2em] md:tracking-[0.4em] text-foreground/90 border-b-primary/60 font-sans hover:bg-primary/5 transition-colors cursor-default whitespace-nowrap"
+                    className="px-6 md:px-10 py-2.5 md:py-3 glass-architectural bg-black/40 backdrop-blur-md text-[8px] md:text-[10px] font-bold uppercase tracking-[0.2em] md:tracking-[0.4em] text-white border-b-primary/60 font-sans hover:bg-primary/10 transition-colors cursor-default whitespace-nowrap shadow-xl"
                   >
                     {chip.label}
                   </motion.span>

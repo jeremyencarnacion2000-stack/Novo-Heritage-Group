@@ -45,8 +45,8 @@ export function Header({ isScrolled, onMenuClick, isIntroFinished = true }: Head
       } ${!isIntroFinished ? "opacity-0 pointer-events-none scale-95 blur-[10px]" : "opacity-100 scale-100 blur-0"}`}
     >
       <div className="flex items-center gap-12">
-        <Link href="/" className="transition-transform hover:scale-[1.02] flex-shrink-0">
-          <Logo className="transition-all duration-500 brightness-0 invert h-12 w-auto min-w-[160px]" />
+        <Link href="/" className="transition-transform hover:scale-[1.05] flex-shrink-0">
+          <Logo className="transition-all duration-500 brightness-0 invert h-14 md:h-16 w-auto min-w-[180px] md:min-w-[220px] drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]" />
         </Link>
 
         <nav className={`flex items-center gap-8 border-l pl-8 h-8 transition-colors duration-500 ${isScrolled ? "border-white/20" : "border-foreground/10"}`}>
@@ -59,7 +59,7 @@ export function Header({ isScrolled, onMenuClick, isIntroFinished = true }: Head
             <Link
               key={item.label}
               href={item.href}
-              className="text-xs font-bold uppercase tracking-[0.2em] transition-colors duration-300 text-white/70 hover:text-white"
+              className="text-xs font-black uppercase tracking-[0.25em] transition-colors duration-300 text-white hover:text-primary [text-shadow:_0_1px_8px_rgb(0_0_0_/_30%)]"
             >
               {item.label}
             </Link>
