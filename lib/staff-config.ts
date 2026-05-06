@@ -10,7 +10,7 @@
 const STAFF_EMAILS = [
   "jorddyr.novoheritage@gmail.com",
   "novoheritagesales@gmail.com",
-  "angelluis.encarnacion2000@gmail.com",
+  "angelluisencarnacion2000@gmail.com",
 ]
 
 /**
