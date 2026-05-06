@@ -136,11 +136,14 @@ export default function BienesRaicesClientPage() {
   useEffect(() => {
     if (activeScene === 'gallery') {
       document.body.style.overflow = 'hidden'
+      window.dispatchEvent(new CustomEvent('lock-scroll'))
     } else {
       document.body.style.overflow = 'unset'
+      window.dispatchEvent(new CustomEvent('unlock-scroll'))
     }
     return () => {
       document.body.style.overflow = 'unset'
+      window.dispatchEvent(new CustomEvent('unlock-scroll'))
     }
   }, [activeScene])
 
@@ -482,7 +485,8 @@ export default function BienesRaicesClientPage() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="fixed right-0 top-0 w-full md:w-[40%] h-[100vh] glass-premium z-[9999] border-l border-primary/10 overflow-y-auto"
+              className="fixed right-0 top-0 w-full md:w-[40%] h-[100vh] glass-premium z-[9999] border-l border-primary/10 overflow-y-auto overscroll-contain"
+              data-lenis-prevent
             >
               <div className="p-12 pt-32">
                 <div className="flex justify-between items-center mb-16">
