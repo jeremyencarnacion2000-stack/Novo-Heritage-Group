@@ -17,10 +17,10 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=Analiza el mensaje de WhatsApp. Extrae TODOS los detalles de la propiedad con extremo profesionalismo.\n\nCuerpo del Mensaje:\n{{ $json.body.message || $json.body.Body || $json.body }}",
+        "text": "=Analiza el mensaje de WhatsApp. Extrae TODOS los detalles de la propiedad con extremo profesionalismo.\n\nCuerpo del Mensaje:\n{{ $json.body.message || $json.body.Body || $json.body }}\n\nURL Multimedia Detectada (si aplica):\n{{ $node[\"WhatsApp Webhook\"].json.body.MediaUrl0 || '' }}",
         "hasOutputParser": true,
         "options": {
-          "systemMessage": "Eres el Censor Oficial de Novo Heritage. Tu trabajo es FILTRAR y ESTRUCTURAR propiedades inmobiliarias que llegan por WhatsApp.\n\nREGLA 1: SOLO puedes aprobar propiedades que provengan evidentemente de CONSTRUCTORAS o desarrolladores directos (ej. proyectos nuevos, residenciales en pre-venta). RECHAZA propiedades de individuos particulares, anuncios genéricos, dueños directos («dueño vende») o que no parezcan profesionales.\nREGLA 2: Si es una constructora/proyecto válido, REDACTA UN TÍTULO PROFESIONAL (ej. 'Exclusivo Apartamento de 3 Habitaciones en Torre Lumen, Naco') ignorando la jerga de WhatsApp.\nREGLA 3: Extrae todos los datos posibles: precio, habitaciones, baños, metraje (área).\nREGLA 4: Extrae CUALQUIER URL multimedia (enlaces a Google Drive, YouTube, fotos, videos cortos, web) que estén en el mensaje y guárdalos en el array 'imagenes'. Es muy importante atrapar las imágenes.\nSi se rechaza, pon 'aprobado': false y da un breve 'motivo_rechazo'."
+          "systemMessage": "Eres el Censor Oficial de Novo Heritage. Tu trabajo es FILTRAR y ESTRUCTURAR propiedades inmobiliarias que llegan por WhatsApp.\n\nREGLA 1: SOLO puedes aprobar propiedades que provengan evidentemente de CONSTRUCTORAS o desarrolladores directos (ej. proyectos nuevos, residenciales en pre-venta). RECHAZA propiedades de individuos particulares, anuncios genéricos, dueños directos («dueño vende») o que no parezcan profesionales.\nREGLA 2: Si es una constructora/proyecto válido, REDACTA UN TÍTULO PROFESIONAL (ej. 'Exclusivo Apartamento de 3 Habitaciones en Torre Lumen, Naco') ignorando la jerga de WhatsApp.\nREGLA 3: Extrae todos los datos posibles: precio, habitaciones, baños, metraje (área).\nREGLA 4: Extrae CUALQUIER URL multimedia (enlaces a Google Drive, YouTube, fotos, videos cortos, web) que estén en el mensaje. \nREGLA 5: Si hay una 'URL Multimedia Detectada' en el campo correspondiente, INCLÚYELA obligatoriamente en el array 'imagenes'. Es la foto real de la propiedad.\n\nSi se rechaza, pon 'aprobado': false y da un breve 'motivo_rechazo'."
         }
       },
       "id": "agent-groq",
@@ -57,7 +57,7 @@
           "descripcion": "Descripción depurada y profesional...",
           "tipo_propiedad": "villa",
           "constructora": "Desarrollos del Este",
-          "precio": 550000,
+          "precio": "550000",
           "habitaciones": 4,
           "banos": 4,
           "area_m2": 350,
@@ -104,26 +104,26 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO properties (title, description, type, bedrooms, bathrooms, area, price, location, image, features, status, transaction_type, is_published, agent_name, whatsapp_id)\nVALUES (\n  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'available', 'venta', true, $11, $12\n) RETURNING id;",
+        "query": "INSERT INTO public.inventario_digital (nombre_proyecto, descripcion_limpia, precio, zona, habitaciones, banos, area_m2, multimedia, es_constructora_oficial, titulo_profesional) \nVALUES ($1, $2, $3, $4, $5, $6, $7, $8, true, $1)\nRETURNING id;",
         "options": {
-          "queryParameters": "={{ [\n  $json.output.titulo_profesional || '',\n  $json.output.descripcion || '',\n  $json.output.tipo_propiedad || '',\n  $json.output.habitaciones || 0,\n  $json.output.banos || 0,\n  $json.output.area_m2 || 0,\n  $json.output.precio || 0,\n  $json.output.ubicacion || '',\n  $json.output.imagenes && $json.output.imagenes.length > 0 ? $json.output.imagenes[0] : '',\n  $json.output.imagenes || [],\n  $json.output.constructora || 'Desarrollador',\n  $node[\"WhatsApp Webhook\"].json.body.From || 'unknown'\n] }}"
+          "queryParameters": "={{ [\n  $json.output.titulo_profesional || 'Proyecto Novo',\n  $json.output.descripcion || '',\n  $json.output.precio || 'Consultar',\n  $json.output.ubicacion || 'República Dominicana',\n  $json.output.habitaciones || 0,\n  $json.output.banos || 0,\n  $json.output.area_m2 || 0,\n  JSON.stringify($json.output.imagenes || [])\n] }}"
         }
       },
-      "id": "insert-railway",
-      "name": "Save to Railway Database",
+      "id": "insert-cockroach",
+      "name": "Save to CockroachDB",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [1120, 420],
       "credentials": {
         "postgres": {
           "id": "CvfAMQyiDbqrANJd", 
-          "name": "Postgres account"
+          "name": "CockroachDB account"
         }
       }
     },
     {
       "parameters": {
-        "content": "Rechazado por IA. Motivo: {{ $json.output.motivo_rechazo }}"
+        "content": "=Rechazado por IA. Motivo: {{ $json.output.motivo_rechazo }}"
       },
       "id": "reject-log",
       "name": "Log Rechazo",

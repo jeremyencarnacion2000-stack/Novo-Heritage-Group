@@ -13,8 +13,8 @@ export async function GET(req: Request) {
     const data = await cockroachDb`
       SELECT *
       FROM public.inventario_digital
-      WHERE nombre_proyecto IS NOT NULL
-        AND nombre_proyecto NOT IN ('Sin nombre', 'Parseo fallido', 'No disponible', '')
+      WHERE (nombre_proyecto IS NOT NULL AND nombre_proyecto NOT IN ('Sin nombre', 'Parseo fallido', 'No disponible', ''))
+         OR (titulo_profesional IS NOT NULL AND titulo_profesional NOT IN ('', 'Proyecto Novo'))
       ORDER BY id DESC
       LIMIT 100
     `;
@@ -39,12 +39,16 @@ export async function GET(req: Request) {
         priceNum = parseFloat(cleaned) || 0;
       }
 
-      // Multimedia handling
+      // Multimedia handling (CockroachDB often returns JSON objects or strings)
       let images: string[] = [];
       try {
-        const parsed = typeof p.multimedia === 'string' ? JSON.parse(p.multimedia) : (p.multimedia || []);
+        const rawMultimedia = p.multimedia || p.imagenes || [];
+        const parsed = typeof rawMultimedia === 'string' ? JSON.parse(rawMultimedia) : rawMultimedia;
         if (Array.isArray(parsed)) {
-          images = parsed.filter((u: string) => u && typeof u === 'string' && u.startsWith('http'));
+          images = parsed.filter((u: any) => u && typeof u === 'string' && u.startsWith('http'));
+        } else if (typeof parsed === 'object' && parsed !== null) {
+          // If it's a single object, extract values
+          images = Object.values(parsed).filter((u: any) => typeof u === 'string' && u.startsWith('http')) as string[];
         }
       } catch { /* ignore */ }
 
@@ -52,21 +56,20 @@ export async function GET(req: Request) {
 
       return {
         id: String(p.id),
-        title: p.nombre_proyecto || "Propiedad Novo Heritage",
+        title: p.titulo_profesional || p.nombre_proyecto || "Propiedad Novo Heritage",
         location: p.zona || "República Dominicana",
         address: p.zona || "Ubicación Premium",
         status: 'available',
         price: priceNum,
         priceLabel: p.precio || 'Consultar',
         type: "propiedad",
-        // Extract from dynamic columns if present, otherwise fallback
-        bedrooms: parseInt(p.habitaciones || p.cuartos || 3),
-        bathrooms: parseInt(p.banos || p.sanitarios || 2),
-        area: parseFloat(p.area_m2 || p.metros || p.construccion || 150),
+        bedrooms: parseInt(p.habitaciones || 3),
+        bathrooms: parseInt(p.banos || 2),
+        area: parseFloat(p.area_m2 || 150),
         sqft: Math.round(parseFloat(p.area_m2 || 150) * 10.764),
         yearBuilt: new Date().getFullYear(),
         description: p.descripcion_limpia || "Propiedad gestionada por Novo Heritage Group.",
-        features: p.es_constructora_oficial ? ["Constructora Oficial", "Proyecto Verificado"] : ["Verificación Pendiente"],
+        features: p.es_constructora_oficial ? ["Constructora Oficial", "Proyecto Verificado"] : ["Novo Exclusive"],
         agent: {
           name: 'Novo Heritage Real Estate',
           phone: '+1 809-555-0123',
@@ -81,13 +84,22 @@ export async function GET(req: Request) {
         amenities: [],
         transactionType: 'venta',
         isOfficial: p.es_constructora_oficial,
-        subtitle: p.titulo_profesional || '',
+        subtitle: p.nombre_proyecto || '',
       }
     })
 
     return NextResponse.json(mapped)
-  } catch (err) {
-    console.error('Properties fetch error:', err)
+  } catch (err: any) {
+    console.error('Properties fetch error:', err);
+    
+    // Fallback: Si hay error de conexión (ECONNREFUSED), devolver array vacío o loguear
+    if (err.message?.includes('ECONNREFUSED')) {
+      return NextResponse.json({ 
+        error: "Database connectivity issue", 
+        message: "Estamos actualizando el inventario. Por favor, intente más tarde." 
+      }, { status: 503 });
+    }
+
     return NextResponse.json(
       { error: "Error al cargar propiedades" },
       { status: 500 }
