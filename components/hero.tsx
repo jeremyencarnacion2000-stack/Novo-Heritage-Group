@@ -140,7 +140,7 @@ export function Hero({ introFinished, onIntroComplete }: HeroProps) {
                     initial={{ opacity: 0, x: 30 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 1.4 + chip.delay, duration: 0.8 }}
-                    className="px-6 md:px-10 py-2.5 md:py-3 bg-black/60 backdrop-blur-xl text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-white/90 border border-white/10 hover:border-primary/50 hover:text-primary transition-all duration-500 cursor-default whitespace-nowrap shadow-2xl rounded-sm"
+                    className="px-6 md:px-10 py-2.5 md:py-3 glass-architectural text-[8px] md:text-[10px] font-bold uppercase tracking-[0.2em] md:tracking-[0.4em] text-foreground/90 border-b-primary/60 font-sans hover:bg-primary/5 transition-colors cursor-default whitespace-nowrap"
                   >
                     {chip.label}
                   </motion.span>

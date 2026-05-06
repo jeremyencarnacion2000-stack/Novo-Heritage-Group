@@ -59,7 +59,7 @@ export function Header({ isScrolled, onMenuClick, isIntroFinished = true }: Head
             <Link
               key={item.label}
               href={item.href}
-              className="text-xs font-black uppercase tracking-[0.25em] transition-colors duration-300 text-white hover:text-primary [text-shadow:_0_1px_8px_rgb(0_0_0_/_30%)]"
+              className="text-xs font-bold uppercase tracking-[0.2em] transition-colors duration-300 text-white/70 hover:text-white"
             >
               {item.label}
             </Link>
