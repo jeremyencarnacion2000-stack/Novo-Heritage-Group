@@ -120,17 +120,15 @@ export function SidebarNav({ isOpen, onClose }: SidebarNavProps) {
                                         <Link
                                             href={item.href}
                                             onClick={(e) => handleNavClick(e, item.href)}
-                                            className="group flex items-center justify-between p-4 rounded-none hover:bg-foreground/5 transition-all duration-300"
+                                            className="group flex items-center justify-between py-6 px-4 border-l-2 border-transparent hover:border-primary hover:bg-primary/5 transition-all duration-500"
                                         >
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 flex items-center justify-center rounded-none bg-foreground/5 border border-border group-hover:border-amber-500/30 group-hover:bg-amber-500/10 transition-all">
-                                                    <item.icon className="w-5 h-5 text-muted-foreground group-hover:text-amber-400 transition-colors" />
-                                                </div>
-                                                <span className="text-lg font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                                            <div className="flex items-center gap-6">
+                                                <span className="text-[10px] font-black text-primary/40 group-hover:text-primary transition-colors font-sans">0{index + 1}</span>
+                                                <span className="text-xl font-serif text-muted-foreground group-hover:text-foreground tracking-tight transition-colors">
                                                     {item.name}
                                                 </span>
                                             </div>
-                                            <ArrowRight className="w-4 h-4 text-white/0 group-hover:text-amber-400 group-hover:translate-x-1 transition-all" />
+                                            <ArrowRight className="w-5 h-5 text-primary opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-500" />
                                         </Link>
                                     </motion.div>
                                 ))}
@@ -183,9 +181,10 @@ export function SidebarNav({ isOpen, onClose }: SidebarNavProps) {
                                 <Link
                                     href="#contacto"
                                     onClick={(e) => handleNavClick(e, "#contacto")}
-                                    className="flex items-center justify-center gap-2 w-full py-3 bg-amber-500 hover:bg-amber-400 text-black rounded-none text-sm font-bold transition-all"
+                                    className="flex items-center justify-center gap-3 w-full py-5 bg-primary text-black rounded-none text-[10px] font-black uppercase tracking-[0.3em] shadow-premium hover:shadow-premium-lg hover:-translate-y-0.5 active:scale-95 transition-all duration-500"
                                 >
-                                    Hablar con un experto
+                                    <span>Hablar con un experto</span>
+                                    <MessageSquare className="w-4 h-4" />
                                 </Link>
                             </div>
                         </div>
