@@ -21,7 +21,7 @@ export function MobileHeader({
         className="flex items-center justify-center gap-2 active:scale-95 transition-transform"
         href="/"
       >
-        <Logo className="h-14 w-48 scale-[1.3] origin-left brightness-0 invert drop-shadow-[0_0_10px_rgba(255,255,255,0.15)]" />
+        <Logo className="h-16 w-56 scale-[1.4] origin-left brightness-0 invert drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]" />
       </Link>
 
       <button

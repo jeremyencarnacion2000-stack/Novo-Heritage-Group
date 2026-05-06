@@ -46,7 +46,7 @@ export function Header({ isScrolled, onMenuClick, isIntroFinished = true }: Head
     >
       <div className="flex items-center gap-12">
         <Link href="/" className="transition-transform hover:scale-[1.05] flex-shrink-0">
-          <Logo className="transition-all duration-500 brightness-0 invert h-14 md:h-16 w-auto min-w-[180px] md:min-w-[220px] drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]" />
+          <Logo className="transition-all duration-500 brightness-0 invert h-16 md:h-20 w-auto min-w-[220px] md:min-w-[280px] drop-shadow-[0_0_20px_rgba(255,255,255,0.15)]" />
         </Link>
 
         <nav className={`flex items-center gap-8 border-l pl-8 h-8 transition-colors duration-500 ${isScrolled ? "border-white/20" : "border-foreground/10"}`}>
