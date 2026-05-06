@@ -22,6 +22,7 @@ export function SmoothScroll({ children }: SmoothScrollProps) {
             touchMultiplier: 2,
             infinite: false,
             syncTouch: true,
+            lerp: 0.1,
         })
 
         // Sync Lenis with GSAP ScrollTrigger

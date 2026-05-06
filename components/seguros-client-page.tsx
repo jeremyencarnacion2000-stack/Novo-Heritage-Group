@@ -90,6 +90,10 @@ export default function SegurosClientPage() {
       setIsScrolled(window.scrollY > 50)
     }
     window.addEventListener("scroll", handleScroll)
+    
+    // Always ensure scroll is unlocked when landing here
+    window.dispatchEvent(new CustomEvent("unlock-scroll"))
+    
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
@@ -107,7 +111,7 @@ export default function SegurosClientPage() {
       <SidebarNav isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       {/* Dynamic Background Accents */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] rounded-none bg-primary/5 blur-[120px]" />
         <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] rounded-none bg-primary/5 blur-[120px]" />
         

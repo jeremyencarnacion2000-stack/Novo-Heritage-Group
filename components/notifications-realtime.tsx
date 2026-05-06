@@ -443,11 +443,11 @@ export function NotificationsRealtime() {
             <Card
               key={notification.id}
               className={cn(
-                "bg-gradient-to-br from-card/95 to-card/90 backdrop-blur-2xl border border-border/20 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02]",
-                !notification.read && "ring-2 ring-primary/20 bg-primary/5"
+                "bg-gradient-to-br from-card/95 to-card/90 backdrop-blur-2xl border border-border/20 shadow-premium transition-all duration-300 hover:shadow-premium-lg hover:scale-[1.01] active:scale-[0.99]",
+                !notification.read && "ring-1 ring-primary/30 bg-primary/5"
               )}
             >
-              <CardContent className="p-4">
+              <CardContent className="p-3 md:p-4">
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0 mt-1">
                     {getNotificationIcon(notification.type)}

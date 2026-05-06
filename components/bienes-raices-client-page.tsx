@@ -65,15 +65,15 @@ const ParallaxCard = ({ children, image, title, className, onClick, overlayOpaci
   )
 }
 
-export default function BienesRaicesClientPage() {
+export default function BienesRaicesClientPage({ properties: initialProperties }: { properties?: any[] }) {
   const { user } = useAuth()
   const [searchQuery, setSearchQuery] = useState<string>("")
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 15000000])
   const [isScrolled, setIsScrolled] = useState(false)
   const [selectedProperty, setSelectedProperty] = useState<any>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
-  const [properties, setProperties] = useState<any[]>([])
-  const [isLoadingProps, setIsLoadingProps] = useState<boolean>(true)
+  const [properties, setProperties] = useState<any[]>(initialProperties || [])
+  const [isLoadingProps, setIsLoadingProps] = useState<boolean>(!initialProperties)
   const [activeScene, setActiveScene] = useState<'hero' | 'gallery'>('hero')
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
@@ -113,19 +113,21 @@ export default function BienesRaicesClientPage() {
     const handleScroll = () => setIsScrolled(window.scrollY > 50)
     window.addEventListener('scroll', handleScroll)
     
-    // Load data
-    const load = async () => {
-      try {
-        const response = await fetch('/api/properties')
-        const data = await response.json()
-        setProperties(data)
-      } catch (err) {
-        console.error('Failed to load properties', err)
-      } finally {
-        setIsLoadingProps(false)
+    // Load data only if not provided by server
+    if (!initialProperties) {
+      const load = async () => {
+        try {
+          const response = await fetch('/api/properties')
+          const data = await response.json()
+          setProperties(data)
+        } catch (err) {
+          console.error('Failed to load properties', err)
+        } finally {
+          setIsLoadingProps(false)
+        }
       }
+      load()
     }
-    load()
 
     return () => {
       ScrollTrigger.getAll().forEach(trigger => trigger.kill())
@@ -172,305 +174,8 @@ export default function BienesRaicesClientPage() {
       />
       <SidebarNav isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       
-      {/* Dynamic Background Accents */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] rounded-none bg-primary/5 blur-[120px]" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] rounded-none bg-primary/5 blur-[120px]" />
-        
-        {/* Section Watermark */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[800px] aspect-square opacity-[0.03] grayscale brightness-0 invert pointer-events-none select-none overflow-hidden">
-          <Image
-            src="/Realty.svg"
-            alt=""
-            fill
-            className="object-contain scale-150 rotate-[-15deg]"
-          />
-        </div>
-      </div>
-
-      {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        <motion.div
-           layout
-           className={`absolute inset-0 z-0 transition-all duration-1000 ease-in-out ${activeScene === 'gallery' ? 'translate-x-[-25%] scale-110 blur-md' : 'translate-x-0 scale-100'}`}
-        >
-          <motion.div style={{ y: bgY }} className="absolute inset-0">
-            <Image
-              src="/premium-luxury-villa-real-estate-hero.png"
-              alt="Luxury Real Estate"
-              fill
-              className="object-cover brightness-[0.5]"
-              priority
-            />
-          </motion.div>
-          <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-transparent to-background" />
-        </motion.div>
-
-        <div className="container layout-guide-visual relative z-10 text-center max-w-7xl mx-auto pt-20">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <div className="inline-block px-4 py-1.5 mb-8 border border-primary/20 glass-premium">
-              <span className="text-[10px] tracking-[0.4em] uppercase font-bold text-foreground/60">Legacy Real Estate</span>
-            </div>
-
-            <PremiumHeading as="h1" className="mb-10 leading-[0.9]">
-              Habitaciones que<br />
-              <span className="italic font-extralight text-primary">hablan de ti</span>
-            </PremiumHeading>
-
-            <PremiumText className="text-base md:text-lg text-foreground/50 mb-12 max-w-2xl mx-auto font-light tracking-wide">
-              No solo construimos estructuras; curamos el escenario donde se desarrolla su legado. Arquitectura de vanguardia con alma Quisqueyana.
-            </PremiumText>
-
-            <div className="flex flex-col sm:flex-row gap-8 justify-center mt-12 mb-20">
-              <button 
-                className="group relative flex items-center justify-between gap-12 px-12 py-5 bg-primary text-black transition-all duration-700 hover:scale-[1.02] rounded-none shadow-premium overflow-hidden border border-primary/20"
-                onClick={() => setActiveScene('gallery')}
-              >
-                <span className="text-xs font-bold uppercase tracking-[0.3em]">Explorar Catálogo</span>
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </button>
-              
-              <Dialog modal={true}>
-                <DialogTrigger asChild>
-                  <button className="px-12 py-5 border border-primary/20 glass-premium text-xs font-bold uppercase tracking-[0.3em] hover:bg-primary/5 transition-all">
-                    Consultar Inversión
-                  </button>
-                </DialogTrigger>
-                <DialogContent className="max-w-6xl w-full p-0 bg-transparent border-none overflow-y-auto max-h-[92vh] outline-none">
-                  <DialogTitle className="sr-only">Consultar Inversión Inmobiliaria</DialogTitle>
-                  <DialogDescription className="sr-only">Formulario para consultar opciones de inversión en bienes raíces</DialogDescription>
-                  <div className="bg-background rounded-none p-10 md:p-20 shadow-2xl border border-primary/20 relative">
-                    <RealEstateQuoteForm defaultType="inversion" />
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Featured Projects Grid */}
-      <section id="propiedades" className="section-airy relative px-4 bg-background overflow-hidden">
-        <div className="container layout-guide-visual max-w-7xl mx-auto">
-          <div className="grid grid-cols-12 gap-8 md:items-end justify-between mb-20 border-b border-primary/10 pb-16">
-            <div className="col-span-12 lg:col-span-8">
-              <PremiumHeading as="h2" className="leading-[0.9]">
-                Colecciones <br/><span className="italic text-primary">Arquitectónicas</span>
-              </PremiumHeading>
-            </div>
-            <div className="col-span-12 lg:col-span-4">
-              <PremiumText className="text-foreground/40 text-lg font-light leading-relaxed">
-                Curaduría de espacios que trascienden la mera utilidad para convertirse en hitos de diseño.
-              </PremiumText>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-12 gap-10">
-            {(properties.length > 0 ? properties.slice(0, 4) : collections).map((item, index) => (
-              <div key={item.id || item.title} className="col-span-12 md:col-span-6">
-                <Link href={item.id ? `/bienes-raices/propiedad/${item.id}` : "#"}>
-                <ParallaxCard
-                  image={item.image || "/placeholder.jpg"}
-                  title={item.title}
-                  className="aspect-[4/3] border border-primary/5"
-                >
-                  <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-12 bg-gradient-to-t from-black via-black/40 to-transparent">
-                    <div className="z-10 group-hover:-translate-y-4 transition-transform duration-700">
-                      <p className="text-[10px] text-primary uppercase tracking-[0.4em] font-bold mb-3">{item.sector || item.subtitle || "Premium"}</p>
-                      <h3 className="text-3xl md:text-5xl font-light font-serif text-white mb-6 leading-tight line-clamp-2">
-                        {item.title}
-                      </h3>
-                      
-                      <div className="flex gap-10 text-[10px] uppercase tracking-[0.2em] text-white/40 mb-8 border-t border-white/10 pt-6">
-                        <div className="space-y-1">
-                          <span className="block opacity-50">Área</span>
-                          <span className="text-white">{item.area} m²</span>
-                        </div>
-                        <div className="space-y-1">
-                          <span className="block opacity-50">Hab</span>
-                          <span className="text-white">{item.bedrooms}</span>
-                        </div>
-                      </div>
-
-                      <button 
-                        onClick={async (e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setSelectedProperty(item);
-                          setIsDetailModalOpen(true);
-                          
-                          // Tracking behavioral data for AI profiling
-                          if (user) {
-                            trackBehavior({
-                              usuario_id: (user as any).id,
-                              evento: 'click',
-                              seccion: 'bienes-raices',
-                              metadata: {
-                                property_id: item.id,
-                                property_title: item.title,
-                                sector: item.sector,
-                                price: item.price,
-                                type: item.type
-                              }
-                            });
-                          }
-                        }}
-                        className="px-10 py-4 bg-transparent border border-white/20 text-white text-[10px] font-bold uppercase tracking-[0.3em] hover:bg-white hover:text-black transition-all"
-                      >
-                        Ver Ficha Técnica
-                      </button>
-                    </div>
-                  </div>
-                </ParallaxCard>
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Property Carousel Section */}
-      <section className="section-airy relative px-4 glass-premium bg-primary/[0.01] overflow-hidden">
-        <div className="container layout-guide-visual max-w-7xl mx-auto">
-          <div className="flex justify-between items-end mb-20 border-b border-primary/10 pb-12">
-            <div>
-              <PremiumHeading as="h2" className="leading-tight">
-                Propiedades <br/><span className="italic text-primary">Insignia</span>
-              </PremiumHeading>
-            </div>
-            <Link href="/bienes-raices/coleccion" className="text-[10px] uppercase tracking-[0.4em] font-bold text-foreground/40 hover:text-primary transition-all flex items-center gap-4 group mb-4">
-              Catálogo Completo <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
-            </Link>
-          </div>
-          <PropertyCarousel properties={properties.filter(p => p.featured).slice(0, 6)} />
-        </div>
-      </section>
-
-      {/* Corporate Services */}
-      <section id="servicios" className="section-airy relative px-4 overflow-hidden bg-background">
-        <div className="container layout-guide-visual mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-24"
-          >
-            <PremiumHeading as="h2" className="mb-8">
-              Protocolos de <span className="italic text-primary">Excelencia</span>
-            </PremiumHeading>
-            <div className="w-32 h-[1px] bg-primary/40 mx-auto" />
-          </motion.div>
-
-          <div className="grid grid-cols-12 gap-8">
-            {services.map((service, index) => (
-              <motion.div
-                key={service.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="col-span-12 md:col-span-6 lg:col-span-3 group p-10 glass-premium border-primary/5 hover:border-primary/20 transition-all duration-700"
-              >
-                <div className="w-16 h-16 bg-primary/5 border border-primary/10 flex items-center justify-center mb-8 group-hover:bg-primary transition-colors duration-500">
-                  {React.createElement(iconMap[service.icon] || Home, { className: "w-8 h-8 text-primary group-hover:text-black transition-colors" })}
-                </div>
-                <h3 className="text-2xl font-serif text-foreground mb-4">{service.title}</h3>
-                <p className="text-foreground/50 font-light text-sm leading-relaxed tracking-wide">{service.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ROI & Investment */}
-      <section className="section-airy relative px-4 bg-primary/[0.02] border-y border-primary/5 overflow-hidden">
-        <div className="container layout-guide-visual max-w-7xl mx-auto">
-          <div className="grid grid-cols-12 gap-12 lg:gap-24 items-center">
-            <div className="col-span-12 lg:col-span-7 space-y-12">
-              <PremiumHeading as="h2" className="leading-[0.9]">
-                Ingeniería de <br/><span className="italic text-primary">Patrimonio</span>
-              </PremiumHeading>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="flex items-start gap-6 group">
-                   <div className="flex-shrink-0 w-12 h-12 border border-primary/20 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-black transition-all">
-                      <TrendingUp className="w-6 h-6" />
-                   </div>
-                   <div className="space-y-2">
-                      <h4 className="text-xl font-serif">Plusvalía Curada</h4>
-                      <PremiumText className="text-sm text-foreground/40 font-light">Seleccionamos únicamente activos en zonas de crecimiento estratégico con rendimientos proyectados del 12-18% anual.</PremiumText>
-                   </div>
-                </div>
-                <div className="flex items-start gap-6 group">
-                   <div className="flex-shrink-0 w-12 h-12 border border-primary/20 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-black transition-all">
-                      <DollarSign className="w-6 h-6" />
-                   </div>
-                   <div className="space-y-2">
-                      <h4 className="text-xl font-serif">Cash-Flow Inmobiliario</h4>
-                      <PremiumText className="text-sm text-foreground/40 font-light">Optimización de rentas mediante nuestra red de Luxury Rentals en Santo Domingo y Cap Cana.</PremiumText>
-                   </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="col-span-12 lg:col-span-5">
-              <div className="glass-premium border-primary/10 p-10 md:p-12 shadow-premium relative">
-                <div className="absolute -top-4 -left-4 px-4 py-1 bg-primary text-black text-[9px] uppercase font-black tracking-widest">Atención Prioritaria</div>
-                <h3 className="text-2xl font-serif mb-8 text-center">Consultoría de Inversión</h3>
-                <BookingForms type="appointment" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Full Catalog Trigger */}
-      <section id="vender" className="section-airy relative px-4 overflow-hidden bg-background">
-        <div className="container layout-guide-visual max-w-5xl mx-auto flex flex-col md:flex-row gap-16 items-center">
-            <div className="flex-1">
-                <PremiumHeading as="h2" className="mb-8 leading-[0.9] text-left">
-                   Venda o Alquile con la red <span className="italic text-primary">Global</span>
-                </PremiumHeading>
-                <PremiumText className="text-left mb-10 text-foreground/50 tracking-wider">
-                   Asociar su propiedad a Novo Heritage asegura su exposición al público internacional y corporativo idóneo, incrementando sus probabilidades de cierre exitoso con total discreción y rigor legal.
-                </PremiumText>
-                
-                <div className="flex items-start gap-4 mb-6">
-                    <Check className="w-5 h-5 text-primary mt-1" />
-                    <div>
-                        <h4 className="text-sm font-bold uppercase tracking-wider mb-2">Evaluación Gratuita</h4>
-                        <p className="text-xs text-foreground/40 font-light">Cotización comercial basada en datos de mercado y posicionamiento.</p>
-                    </div>
-                </div>
-                
-                <div className="flex items-start gap-4">
-                    <Check className="w-5 h-5 text-primary mt-1" />
-                    <div>
-                        <h4 className="text-sm font-bold uppercase tracking-wider mb-2">Comercialización Elite</h4>
-                        <p className="text-xs text-foreground/40 font-light">Campañas de impacto digital en nuestro ecosistema de inversores.</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div className="flex-1 w-full relative z-10">
-                <PropertySellForm />
-            </div>
-        </div>
-      </section>
-
-      <PropertyDetailModal
-        open={isDetailModalOpen}
-        onOpenChange={setIsDetailModalOpen}
-        property={selectedProperty}
-      />
-
-      {/* Side Panel Overlay for 'Gallery' Scene - Moved out of the section to prevent z-index clipping */}
-      <AnimatePresence>
+      {/* Side Panel Overlay for 'Gallery' Scene - Placed BEFORE main content so it's not affected by displacement */}
+      <AnimatePresence mode="wait">
         {activeScene === 'gallery' && (
           <>
             <motion.div
@@ -478,44 +183,53 @@ export default function BienesRaicesClientPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setActiveScene('hero')}
-              className="fixed inset-0 bg-background/60 backdrop-blur-sm z-[9998]"
+              className="fixed inset-0 bg-background/80 backdrop-blur-md z-[10000]"
             />
             <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="fixed right-0 top-0 w-full md:w-[40%] h-[100vh] glass-premium z-[9999] border-l border-primary/10 overflow-y-auto overscroll-contain"
+              initial={{ x: '100%', opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: '100%', opacity: 0 }}
+              transition={{ duration: 1.2, ease: [0.19, 1, 0.22, 1] }}
+              className="fixed right-0 top-0 w-full md:w-[45%] h-[100vh] glass-premium z-[10001] border-l border-primary/20 overflow-y-auto overscroll-contain shadow-[-50px_0_100px_rgba(0,0,0,0.5)]"
               data-lenis-prevent
             >
-              <div className="p-12 pt-32">
-                <div className="flex justify-between items-center mb-16">
-                  <h2 className="text-4xl font-light font-serif text-foreground">Selecciones VIP</h2>
+              <div className="p-12 md:p-20 pt-32">
+                <div className="flex justify-between items-center mb-20">
+                  <div className="space-y-2">
+                    <span className="text-[10px] uppercase tracking-[0.6em] text-primary font-black block">Colección Privada</span>
+                    <h2 className="text-5xl md:text-6xl font-light font-serif text-white leading-none">Selecciones <br/><span className="italic text-primary/80">VIP</span></h2>
+                  </div>
                   <button
                     onClick={() => setActiveScene('hero')}
-                    className="p-3 border border-primary/20 hover:bg-primary hover:text-black transition-all"
+                    className="p-5 border border-white/10 glass-premium hover:bg-primary hover:text-black transition-all duration-700 group hover:rotate-90"
                   >
-                    <ArrowRight className="w-5 h-5 rotate-180" />
+                    <ArrowRight className="w-6 h-6 rotate-180" />
                   </button>
                 </div>
 
-                <div className="grid gap-10">
-                  {(properties.length > 0 ? properties.slice(0, 4) : collections).map((item: any, idx: number) => (
+                <div className="grid gap-12">
+                  {(properties.length > 0 ? properties.slice(0, 5) : collections).map((item: any, idx: number) => (
                     <Link href={item.id ? `/bienes-raices/propiedad/${item.id}` : "#propiedades"} key={item.id || item.title} onClick={() => {if(!item.id) scrollToGallery()}}>
                       <motion.div
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.2 + idx * 0.1 }}
-                        className="group cursor-pointer flex gap-8 items-center p-6 border border-primary/5 hover:border-primary/20 hover:bg-primary/[0.02] transition-all duration-700"
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4 + idx * 0.15, duration: 0.8 }}
+                        className="group cursor-pointer flex gap-10 items-center pb-12 border-b border-white/5 hover:border-primary/30 transition-all duration-700"
                       >
-                        <div className="relative w-24 h-24 overflow-hidden border border-primary/10 bg-muted">
-                          <Image src={item.image || "/placeholder.jpg"} alt={item.title} fill className="object-cover grayscale group-hover:grayscale-0 transition-all duration-1000" />
+                        <div className="relative w-32 h-32 overflow-hidden border border-white/10 bg-black/40 shadow-premium">
+                          <Image src={item.image || "/placeholder.jpg"} alt={item.title} fill className="object-cover scale-110 group-hover:scale-100 grayscale-[0.5] group-hover:grayscale-0 transition-all duration-1000" />
                         </div>
-                        <div>
-                          <h4 className="text-xl font-serif text-foreground mb-1 line-clamp-1">{item.title}</h4>
-                          <p className="text-[10px] text-foreground/40 uppercase tracking-[0.2em]">{item.sector || item.subtitle || "Premium"}</p>
+                        <div className="flex-1 space-y-3">
+                          <h4 className="text-2xl md:text-3xl font-serif text-white mb-1 line-clamp-1 group-hover:text-primary transition-colors">{item.title}</h4>
+                          <div className="flex items-center gap-4">
+                            <span className="text-[9px] text-white/40 uppercase tracking-[0.4em]">{item.sector || item.subtitle || "Premium"}</span>
+                            <div className="w-8 h-[1px] bg-primary/20" />
+                            <span className="text-[10px] font-bold text-primary tracking-widest">Ver Detalles</span>
+                          </div>
                         </div>
-                        <ArrowRight className="ml-auto w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0" flex-shrink-0 />
+                        <div className="w-12 h-12 flex items-center justify-center border border-white/10 rounded-full opacity-0 group-hover:opacity-100 group-hover:border-primary transition-all duration-700">
+                          <ArrowRight className="w-4 h-4 text-primary group-hover:translate-x-1" />
+                        </div>
                       </motion.div>
                     </Link>
                   ))}
@@ -526,8 +240,263 @@ export default function BienesRaicesClientPage() {
         )}
       </AnimatePresence>
 
+      <motion.div 
+        animate={{ 
+          x: activeScene === 'gallery' ? '-30%' : 0,
+          scale: activeScene === 'gallery' ? 0.95 : 1,
+          opacity: activeScene === 'gallery' ? 0.4 : 1,
+          filter: activeScene === 'gallery' ? 'blur(10px)' : 'blur(0px)'
+        }}
+        transition={{ duration: 1, ease: [0.19, 1, 0.22, 1] }}
+        className="relative z-[10] w-full origin-right"
+      >
+        {/* Dynamic Background Accents */}
+        <div className="fixed inset-0 z-0 pointer-events-none">
+          <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] bg-primary/5 blur-[120px]" />
+          <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] bg-primary/5 blur-[120px]" />
+          
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[800px] aspect-square opacity-[0.03] grayscale brightness-0 invert pointer-events-none select-none overflow-hidden">
+            <Image
+              src="/Realty.svg"
+              alt=""
+              fill
+              className="object-contain scale-150 rotate-[-15deg]"
+            />
+          </div>
+        </div>
+
+        {/* Hero Section */}
+        <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+          <div className="absolute inset-0 z-0">
+            <motion.div style={{ y: bgY }} className="absolute inset-0">
+              <Image
+                src="/premium-luxury-villa-real-estate-hero.png"
+                alt="Luxury Real Estate"
+                fill
+                className="object-cover brightness-[0.5]"
+                priority
+              />
+            </motion.div>
+            <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-transparent to-background" />
+          </div>
+
+          <div className="container layout-guide-visual relative z-10 text-center max-w-7xl mx-auto pt-20">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+            >
+              <div className="inline-block px-6 py-2 mb-10 border border-primary/20 glass-premium">
+                <span className="text-[10px] tracking-[0.5em] uppercase font-black text-primary/80">Legacy Real Estate</span>
+              </div>
+
+              <PremiumHeading as="h1" className="mb-12 leading-[0.85] text-7xl md:text-9xl tracking-tighter">
+                Habitaciones que<br />
+                <span className="italic font-extralight text-primary drop-shadow-[0_0_30px_rgba(var(--primary-rgb),0.3)]">hablan de ti</span>
+              </PremiumHeading>
+
+              <PremiumText className="text-lg md:text-xl text-foreground/40 mb-16 max-w-3xl mx-auto font-light tracking-widest uppercase pb-12 border-b border-white/5">
+                Arquitectura de vanguardia con alma Quisqueyana. <br/>Escenarios para legados familiares.
+              </PremiumText>
+
+              <div className="flex flex-col sm:flex-row gap-12 justify-center mt-12 bg-black/20 backdrop-blur-sm p-8 max-w-fit mx-auto border border-white/5">
+                <button 
+                  className="group relative flex items-center justify-between gap-16 px-16 py-6 bg-primary text-black transition-all duration-700 hover:scale-[1.05] rounded-none shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-hidden"
+                  onClick={() => setActiveScene('gallery')}
+                >
+                  <span className="text-[11px] font-black uppercase tracking-[0.4em]">Explorar Catálogo</span>
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform duration-500" />
+                  <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
+                
+                <Dialog modal={true}>
+                  <DialogTrigger asChild>
+                    <button className="px-16 py-6 border border-white/20 glass-premium text-[11px] font-black uppercase tracking-[0.4em] hover:bg-primary hover:text-black transition-all duration-700">
+                      Consultar Inversión
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-6xl w-full p-0 bg-transparent border-none overflow-y-auto max-h-[92vh] outline-none">
+                    <DialogTitle className="sr-only">Consultar Inversión Inmobiliaria</DialogTitle>
+                    <DialogDescription className="sr-only">Formulario para consultar opciones de inversión en bienes raíces</DialogDescription>
+                    <div className="bg-background rounded-none p-10 md:p-20 shadow-2xl border border-primary/20 relative">
+                      <RealEstateQuoteForm defaultType="inversion" />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Featured Projects Grid */}
+        <section id="propiedades" className="section-airy relative px-4 bg-background overflow-hidden border-t border-white/5">
+          <div className="container layout-guide-visual max-w-7xl mx-auto">
+            <div className="grid grid-cols-12 gap-8 md:items-end justify-between mb-32 border-b border-primary/10 pb-20">
+              <div className="col-span-12 lg:col-span-8">
+                <PremiumHeading as="h2" className="leading-[0.9] text-6xl md:text-8xl">
+                  Colecciones <br/><span className="italic text-primary">Arquitectónicas</span>
+                </PremiumHeading>
+              </div>
+              <div className="col-span-12 lg:col-span-4">
+                <PremiumText className="text-foreground/30 text-xl font-light leading-relaxed tracking-wider mb-2">
+                  Curaduría de espacios que trascienden la utilidad para convertirse en hitos de diseño global.
+                </PremiumText>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-12 gap-16">
+              {(properties.length > 0 ? properties.slice(0, 4) : collections).map((item, index) => (
+                <div key={item.id || item.title} className="col-span-12 md:col-span-6">
+                  <Link href={item.id ? `/bienes-raices/propiedad/${item.id}` : "#"}>
+                  <ParallaxCard
+                    image={item.image || "/placeholder.jpg"}
+                    title={item.title}
+                    className="aspect-[4/3] border border-white/5 shadow-2xl"
+                  >
+                    <div className="absolute inset-0 flex flex-col justify-end p-12 bg-gradient-to-t from-black via-black/40 to-transparent">
+                      <div className="z-10 group-hover:-translate-y-6 transition-transform duration-1000">
+                        <p className="text-[10px] text-primary uppercase tracking-[0.5em] font-black mb-4">{item.sector || item.subtitle || "Premium"}</p>
+                        <h3 className="text-4xl md:text-5xl font-light font-serif text-white mb-8 leading-none line-clamp-2 italic">
+                          {item.title}
+                        </h3>
+                        
+                        <div className="flex gap-12 text-[9px] uppercase tracking-[0.3em] text-white/50 mb-10 border-t border-white/10 pt-8">
+                          <div className="space-y-2">
+                            <span className="block opacity-30 font-black">Área</span>
+                            <span className="text-white font-bold">{item.area} m²</span>
+                          </div>
+                          <div className="space-y-2">
+                            <span className="block opacity-30 font-black">Habitaciones</span>
+                            <span className="text-white font-bold">{item.bedrooms} Units</span>
+                          </div>
+                   
+                        </div>
+
+                        <button 
+                          onClick={async (e) => {
+                            e.preventDefault(); e.stopPropagation(); setSelectedProperty(item); setIsDetailModalOpen(true);
+                            if (user) { trackBehavior({ usuario_id: (user as any).id, evento: 'click', seccion: 'bienes-raices', metadata: { property_id: item.id, price: item.price } }); }
+                          }}
+                          className="px-12 py-5 bg-transparent border border-white/20 text-white text-[10px] font-black uppercase tracking-[0.4em] hover:bg-primary hover:text-black transition-all duration-700 hover:shadow-[0_0_30px_rgba(var(--primary-rgb),0.2)]"
+                        >
+                          Ver Ficha Técnica
+                        </button>
+                      </div>
+                    </div>
+                  </ParallaxCard>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Property Carousel Section */}
+        <section className="section-airy relative px-4 glass-premium bg-primary/[0.01] overflow-hidden border-y border-white/5">
+          <div className="container layout-guide-visual max-w-7xl mx-auto">
+            <div className="flex flex-col md:flex-row justify-between items-end gap-8 mb-24 border-b border-primary/10 pb-16">
+              <div>
+                <PremiumHeading as="h2" className="leading-none text-5xl md:text-7xl">
+                  Propiedades <br/><span className="italic text-primary">Insignia</span>
+                </PremiumHeading>
+              </div>
+              <Link href="/bienes-raices/coleccion" className="text-[10px] uppercase tracking-[0.5em] font-black text-primary hover:text-white transition-all flex items-center gap-6 group mb-4 pb-2 border-b border-primary/40">
+                Catálogo Completo <ArrowRight className="w-5 h-5 group-hover:translate-x-3 transition-transform duration-700" />
+              </Link>
+            </div>
+            <PropertyCarousel properties={properties.filter(p => p.featured).slice(0, 6)} />
+          </div>
+        </section>
+
+        {/* Corporate Services */}
+        <section id="servicios" className="section-airy relative px-4 overflow-hidden bg-background">
+          <div className="container layout-guide-visual mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center mb-32"
+            >
+              <PremiumHeading as="h2" className="mb-12 text-6xl">
+                Protocolos de <span className="italic text-primary underline underline-offset-[12px] decoration-1">Excelencia</span>
+              </PremiumHeading>
+              <div className="w-24 h-[1px] bg-primary/40 mx-auto" />
+            </motion.div>
+
+            <div className="grid grid-cols-12 gap-12">
+              {services.map((service, index) => (
+                <motion.div
+                  key={service.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="col-span-12 md:col-span-6 lg:col-span-3 group p-12 glass-premium border-white/5 hover:border-primary/40 transition-all duration-1000 hover:-translate-y-2"
+                >
+                  <div className="w-20 h-20 bg-black/40 border border-white/10 flex items-center justify-center mb-10 group-hover:bg-primary transition-colors duration-700 shadow-xl group-hover:rotate-[360deg]">
+                    {React.createElement(iconMap[service.icon] || Home, { className: "w-10 h-10 text-primary group-hover:text-black transition-colors" })}
+                  </div>
+                  <h3 className="text-3xl font-serif text-white mb-6 leading-tight">{service.title}</h3>
+                  <p className="text-white/30 font-light text-[13px] leading-relaxed tracking-widest uppercase">{service.description}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ROI & Investment */}
+        <section className="section-airy relative px-4 bg-primary/[0.02] border-y border-white/5 overflow-hidden">
+          <div className="container layout-guide-visual max-w-7xl mx-auto">
+            <div className="grid grid-cols-12 gap-16 lg:gap-32 items-center">
+              <div className="col-span-12 lg:col-span-7 space-y-16">
+                <PremiumHeading as="h2" className="leading-[0.8] text-7xl md:text-9xl">
+                  Ingeniería de <br/><span className="italic text-primary">Patrimonio</span>
+                </PremiumHeading>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                  <div className="flex items-start gap-8 group pb-8 border-b border-white/5">
+                     <div className="flex-shrink-0 w-16 h-16 border border-primary/30 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-black transition-all duration-700">
+                        <TrendingUp className="w-8 h-8" />
+                     </div>
+                     <div className="space-y-4">
+                        <h4 className="text-2xl font-serif text-white">Plusvalía Curada</h4>
+                        <PremiumText className="text-[11px] text-white/40 font-light uppercase tracking-widest leading-loose">Activos estratégicos con rendimientos proyectados del 12-18% anual en polos de alta gama.</PremiumText>
+                     </div>
+                  </div>
+                  <div className="flex items-start gap-8 group pb-8 border-b border-white/5">
+                     <div className="flex-shrink-0 w-16 h-16 border border-primary/30 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-black transition-all duration-700">
+                        <DollarSign className="w-8 h-8" />
+                     </div>
+                     <div className="space-y-4">
+                        <h4 className="text-2xl font-serif text-white">Cash-Flow</h4>
+                        <PremiumText className="text-[11px] text-white/40 font-light uppercase tracking-widest leading-loose">Optimización de rentas vía Luxury Rentals en Santo Domingo y destinos élite.</PremiumText>
+                     </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="col-span-12 lg:col-span-5">
+                <div className="glass-premium border-primary/20 p-12 md:p-16 shadow-[0_40px_100px_rgba(0,0,0,0.5)] relative">
+                  <div className="absolute -top-4 left-10 px-6 py-2 bg-primary text-black text-[10px] font-black uppercase tracking-[0.4em]">Protocolo VIP</div>
+                  <h3 className="text-3xl font-serif mb-12 text-center text-white italic">Consultoría de Inversión</h3>
+                  <BookingForms type="appointment" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <Footer />
+      </motion.div>
+
+      <PropertyDetailModal
+        open={isDetailModalOpen}
+        onOpenChange={setIsDetailModalOpen}
+        property={selectedProperty}
+      />
+
       <Chatbot />
-      <Footer />
     </div>
   )
 }
+

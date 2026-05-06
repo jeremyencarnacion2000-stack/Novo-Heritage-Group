@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 import BienesRaicesClientPage from "@/components/bienes-raices-client-page"
 import DivisionSubmenu from "@/components/division-submenu"
+import cockroachDb from "@/lib/cockroach-db"
+import { mapCockroachProperty } from "@/lib/property-utils"
 
 export const metadata: Metadata = {
   title: "Bienes Raíces en Santo Domingo - Casas y Apartamentos en Venta",
@@ -22,11 +24,30 @@ export const metadata: Metadata = {
   },
 }
 
-export default function BienesRaicesPage() {
+async function getProperties() {
+  try {
+    const data = await cockroachDb`
+      SELECT * 
+      FROM public.inventario_digital 
+      WHERE (nombre_proyecto IS NOT NULL AND nombre_proyecto NOT IN ('Sin nombre', 'Parseo fallido', 'No disponible', ''))
+         OR (titulo_profesional IS NOT NULL AND titulo_profesional NOT IN ('', 'Proyecto Novo'))
+      ORDER BY created_at DESC 
+      LIMIT 100
+    `
+    return (data || []).map(mapCockroachProperty)
+  } catch (error) {
+    console.error('Error fetching properties from CockroachDB:', error)
+    return []
+  }
+}
+
+export default async function BienesRaicesPage() {
+  const properties = await getProperties()
+  
   return (
     <>
       <DivisionSubmenu />
-      <BienesRaicesClientPage />
+      <BienesRaicesClientPage properties={properties} />
     </>
   )
 }

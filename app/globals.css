@@ -213,6 +213,7 @@
   box-shadow: 0 8px 32px 0 hsla(0, 0%, 0%, 0.1);
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 0; /* Afilado/Sharp */
+  will-change: backdrop-filter, transform;
 }
 
 .dark .glass-premium {

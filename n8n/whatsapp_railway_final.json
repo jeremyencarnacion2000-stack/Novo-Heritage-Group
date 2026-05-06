@@ -1,5 +1,5 @@
 {
-  "name": "🔥 Ingestor WhatsApp x Groq x Railway",
+  "name": "🔥 Ingestor WhatsApp x Groq x Railway (Robust)",
   "nodes": [
     {
       "parameters": {
@@ -20,18 +20,21 @@
         "text": "=Analiza el mensaje de WhatsApp. Extrae TODOS los detalles de la propiedad con extremo profesionalismo.\n\nCuerpo del Mensaje:\n{{ $json.body.message || $json.body.Body || $json.body }}\n\nURL Multimedia Detectada (si aplica):\n{{ $node[\"WhatsApp Webhook\"].json.body.MediaUrl0 || '' }}",
         "hasOutputParser": true,
         "options": {
-          "systemMessage": "Eres el Censor Oficial de Novo Heritage. Tu trabajo es FILTRAR y ESTRUCTURAR propiedades inmobiliarias que llegan por WhatsApp.\n\nREGLA 1: SOLO puedes aprobar propiedades que provengan evidentemente de CONSTRUCTORAS o desarrolladores directos (ej. proyectos nuevos, residenciales en pre-venta). RECHAZA propiedades de individuos particulares, anuncios genéricos, dueños directos («dueño vende») o que no parezcan profesionales.\nREGLA 2: Si es una constructora/proyecto válido, REDACTA UN TÍTULO PROFESIONAL (ej. 'Exclusivo Apartamento de 3 Habitaciones en Torre Lumen, Naco') ignorando la jerga de WhatsApp.\nREGLA 3: Extrae todos los datos posibles: precio, habitaciones, baños, metraje (área).\nREGLA 4: Extrae CUALQUIER URL multimedia (enlaces a Google Drive, YouTube, fotos, videos cortos, web) que estén en el mensaje. \nREGLA 5: Si hay una 'URL Multimedia Detectada' en el campo correspondiente, INCLÚYELA obligatoriamente en el array 'imagenes'. Es la foto real de la propiedad.\n\nSi se rechaza, pon 'aprobado': false y da un breve 'motivo_rechazo'."
+          "systemMessage": "Eres el Censor Oficial de Novo Heritage. Tu trabajo es FILTRAR y ESTRUCTURAR propiedades inmobiliarias que llegan por WhatsApp.\n\nREGLA 1: SOLO puedes aprobar propiedades que provengan de CONSTRUCTORAS, desarrolladores o inmobiliarias profesionales.\nREGLA 2: Si es válido, REDACTA UN TÍTULO PROFESIONAL y una DESCRIPCIÓN vendedora y pulida.\nREGLA 3: Extrae todos los datos: precio (solo números), habitaciones, baños, metraje (área).\nREGLA 4: Extrae CUALQUIER URL (Drive, YouTube, fotos, videos) del texto.\nREGLA 5: La 'URL Multimedia Detectada' es CRÍTICA. Si existe, debe estar SIEMPRE en el array 'imagenes'.\n\nSi se rechaza, pon 'aprobado': false y el 'motivo_rechazo'."
         }
       },
       "id": "agent-groq",
       "name": "AI Filter & Extract (Groq)",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
-      "position": [464, 528]
+      "position": [464, 528],
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 2000
     },
     {
       "parameters": {
-        "model": "llama-3.3-70b-versatile",
+        "model": "llama-3.2-11b-vision-preview",
         "options": {
           "temperature": 0.1
         }
@@ -106,7 +109,7 @@
         "operation": "executeQuery",
         "query": "INSERT INTO public.inventario_digital (nombre_proyecto, descripcion_limpia, precio, zona, habitaciones, banos, area_m2, multimedia, es_constructora_oficial, titulo_profesional) \nVALUES ($1, $2, $3, $4, $5, $6, $7, $8, true, $1)\nRETURNING id;",
         "options": {
-          "queryParameters": "={{ [\n  $json.output.titulo_profesional || 'Proyecto Novo',\n  $json.output.descripcion || '',\n  $json.output.precio || 'Consultar',\n  $json.output.ubicacion || 'República Dominicana',\n  $json.output.habitaciones || 0,\n  $json.output.banos || 0,\n  $json.output.area_m2 || 0,\n  JSON.stringify($json.output.imagenes || [])\n] }}"
+          "queryParameters": "={{ [\n  $json.output.titulo_profesional || 'Proyecto Novo',\n  $json.output.descripcion || '',\n  $json.output.precio || 'Consultar',\n  $json.output.ubicacion || 'República Dominicana',\n  $json.output.habitaciones || 0,\n  $json.output.banos || 0,\n  $json.output.area_m2 || 0,\n  JSON.stringify(Array.from(new Set([...($json.output.imagenes || []), ...($node[\"WhatsApp Webhook\"].json.body.MediaUrl0 ? [$node[\"WhatsApp Webhook\"].json.body.MediaUrl0] : [])].filter(u => u && u.startsWith('http')))))\n] }}"
         }
       },
       "id": "insert-cockroach",
@@ -181,7 +184,7 @@
       "main": [
         [
           {
-            "node": "Save to Railway Database",
+            "node": "Save to CockroachDB",
             "type": "main",
             "index": 0
           }

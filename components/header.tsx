@@ -68,17 +68,6 @@ export function Header({ isScrolled, onMenuClick, isIntroFinished = true }: Head
       </div>
 
       <div className="flex items-center gap-4">
-        {showCRM && (
-          <a
-            href={BITRIX_CRM_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-5 py-2 bg-primary/10 border border-primary/30 text-primary text-[10px] font-black uppercase tracking-[0.2em] hover:bg-primary hover:text-black transition-all duration-300 rounded-none"
-          >
-            CRM
-            <ExternalLink className="w-3 h-3" />
-          </a>
-        )}
         <div className="hidden md:flex items-center gap-2 pr-4 border-r border-foreground/10">
            <ThemeToggle />
         </div>

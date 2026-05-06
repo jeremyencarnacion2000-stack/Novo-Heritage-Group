@@ -1,6 +1,7 @@
 import { Metadata } from "next"
 import { PropertyDetailClient } from "@/components/property-detail-client"
-import sql from "@/lib/railway-db"
+import cockroachDb from "@/lib/cockroach-db"
+import { mapCockroachProperty } from "@/lib/property-utils"
 
 interface Props {
   params: { id: string }
@@ -8,14 +9,16 @@ interface Props {
 
 async function getProperty(id: string) {
   try {
-    const data = await sql`
-      SELECT title, description, image, price, location, sector, city
-      FROM properties 
+    const data = await cockroachDb`
+      SELECT *
+      FROM public.inventario_digital
       WHERE id = ${id}
       LIMIT 1
     `;
-    return data[0] || null;
+    if (!data || data.length === 0) return null;
+    return mapCockroachProperty(data[0]);
   } catch (err) {
+    console.error("Error fetching property:", err);
     return null;
   }
 }
@@ -31,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const title = `${property.title} | Novo Heritage`
   const description = property.description?.substring(0, 160) || "Propiedad exclusiva en República Dominicana gestionada por Novo Heritage Group."
-  const imageUrl = property.image || "/Novo Heritage Group.jpg"
+  const imageUrl = property.images?.[0] || "/Novo Heritage Group.jpg"
 
   return {
     title,
@@ -51,6 +54,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default function PropertyDetailPage({ params }: Props) {
-  return <PropertyDetailClient propertyId={params.id} />
+export default async function PropertyDetailPage({ params }: Props) {
+  const property = await getProperty(params.id)
+  return <PropertyDetailClient propertyId={params.id} initialProperty={property} />
 }

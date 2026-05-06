@@ -7,7 +7,7 @@ import { useChat } from "@ai-sdk/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 // @ts-ignore
-import { MessageCircle, X, Send, Sparkles, ShieldCheck } from "lucide-react"
+import { MessageCircle, X, Send, Sparkles, ShieldCheck, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import { useAuth } from "@/hooks/use-auth"
@@ -41,138 +41,157 @@ export default function Chatbot() {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
   }, [aiMessages, isLoading])
 
+  // Scroll locking logic
+  useEffect(() => {
+    if (isOpen) {
+      window.dispatchEvent(new CustomEvent("lock-scroll"))
+    } else {
+      window.dispatchEvent(new CustomEvent("unlock-scroll"))
+    }
+  }, [isOpen])
+
   return (
     <>
       <AnimatePresence>
         {!isOpen && (
           <motion.button
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            whileHover={{ scale: 1.05, y: -5 }}
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 20, opacity: 0 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => setIsOpen(true)}
-            className="fixed bottom-8 right-8 z-[99996] p-4 rounded-none shadow-premium-lg glass-architectural text-primary border border-primary/30 group"
+            className="fixed bottom-8 right-4 md:right-8 z-[99996] flex items-center gap-3 px-4 md:px-6 py-3 md:py-4 bg-background/80 backdrop-blur-md border border-primary/30 shadow-premium group overflow-hidden animate-fade-in-up"
           >
-            <MessageCircle className="w-8 h-8 transition-transform group-hover:scale-110" />
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-none animate-pulse shadow-[0_0_10px_rgba(230,193,90,0.5)]" />
+            <div className="absolute inset-0 bg-primary/10 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+            <Sparkles className="w-5 h-5 text-primary relative z-10 transition-transform group-hover:rotate-12" />
+            <span className="text-[9px] md:text-[10px] uppercase tracking-[0.3em] font-black text-foreground relative z-10">AI Concierge</span>
+            <div className="w-1.5 h-1.5 bg-primary rounded-full relative z-10 animate-pulse shadow-[0_0_8px_rgba(230,193,90,0.5)]" />
           </motion.button>
         )}
       </AnimatePresence>
 
       <AnimatePresence>
         {isOpen && (
-          <motion.div
-            initial={{ y: 20, opacity: 0, scale: 0.95 }}
-            animate={{ y: 0, opacity: 1, scale: 1 }}
-            exit={{ y: 20, opacity: 0, scale: 0.95 }}
-            className="fixed bottom-8 right-8 z-[99997] w-full max-w-[420px] h-[650px] flex flex-col rounded-[2rem] shadow-premium-lg overflow-hidden glass-architectural border border-primary/20"
-          >
-            {/* LUXURY CONCIERGE HEADER */}
-            <div className="p-6 border-b border-primary/10 bg-gradient-to-b from-primary/5 to-transparent flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <div className="w-12 h-12 rounded-none glass-architectural flex items-center justify-center border border-primary/30 shadow-inner">
-                    <Sparkles className="w-6 h-6 text-primary" />
-                  </div>
-                  <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-none border-[3px] border-[#F5F5F0] dark:border-[#0A0A0A]" />
+          <>
+            {/* Backdrop for focus */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsOpen(false)}
+              className="fixed inset-0 bg-background/40 backdrop-blur-sm z-[99996]"
+            />
+            
+            <motion.div
+              initial={{ x: "100%", opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: "100%", opacity: 0 }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="fixed right-0 top-0 bottom-0 z-[99997] w-full max-w-[500px] flex flex-col bg-background/95 backdrop-blur-xl border-l border-primary/20 shadow-2xl overflow-hidden"
+              data-lenis-prevent
+            >
+              {/* EDITORIAL HEADER */}
+              <div className="p-10 pb-6 border-b border-primary/10 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none">
+                   <Sparkles className="w-48 h-48 text-primary" />
                 </div>
-                <div>
-                  <h3 className="text-foreground font-serif italic text-lg leading-tight tracking-tight">Novo AI Concierge</h3>
-                  <div className="flex items-center gap-1.5 pt-0.5">
-                    <ShieldCheck className="w-3 h-3 text-primary/60" />
-                    <span className="text-[9px] text-foreground/40 uppercase tracking-[0.2em] font-black">Asistente de {userName}</span>
+                
+                <div className="flex items-center justify-between relative z-10">
+                  <div className="space-y-1">
+                    <p className="text-[10px] uppercase tracking-[0.4em] text-primary font-bold">Personal Assistant</p>
+                    <h3 className="text-4xl font-serif italic text-foreground tracking-tight">AI Concierge</h3>
                   </div>
+                  <Button 
+                    onClick={() => setIsOpen(false)} 
+                    variant="ghost" 
+                    size="icon" 
+                    className="hover:bg-primary/10 rounded-full text-foreground/40 hover:text-primary transition-all"
+                  >
+                    <X className="w-6 h-6" />
+                  </Button>
+                </div>
+                
+                <div className="mt-8 flex items-center gap-4">
+                  <div className="h-[0.5px] flex-1 bg-primary/20" />
+                  <span className="text-[8px] md:text-[9px] uppercase tracking-[0.3em] text-foreground/40 font-black whitespace-nowrap">Private Secured Line</span>
+                  <div className="h-[0.5px] flex-1 bg-primary/20" />
                 </div>
               </div>
-              <Button 
-                onClick={() => setIsOpen(false)} 
-                variant="ghost" 
-                size="icon" 
-                className="hover:bg-primary/10 rounded-none text-foreground/30 hover:text-primary transition-all active:scale-90"
-              >
-                <X className="w-5 h-5" />
-              </Button>
-            </div>
 
-            {/* MESSAGE AREA */}
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide bg-gradient-to-b from-transparent to-primary/[0.02]">
-              {aiMessages.length === 0 && (
-                <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4">
-                  <Sparkles className="w-12 h-12 text-primary/20" />
-                  <p className="text-xs text-foreground/40 font-black uppercase tracking-[0.3em]">¿En qué puedo asistirle hoy, {userName}?</p>
-                </div>
-              )}
-              
-              {aiMessages.map((m: any) => (
-                <motion.div
-                  initial={{ y: 10, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  key={m.id}
-                  className={cn(
-                    "flex flex-col gap-2 max-w-[88%]",
-                    m.role === "user" ? "ml-auto items-end" : "mr-auto items-start"
-                  )}
-                >
-                  <div className={cn(
-                    "p-4 px-5 rounded-2xl text-[13px] leading-relaxed shadow-sm whitespace-pre-wrap",
-                    m.role === "user"
-                      ? "bg-primary text-black font-medium rounded-tr-none shadow-md shadow-primary/20"
-                      : "glass-architectural text-foreground/80 border border-primary/10 rounded-tl-none font-sans"
-                  )}>
-                    {m.content}
+              {/* MESSAGE AREA - EDITORIAL STYLE */}
+              <div ref={scrollRef} className="flex-1 overflow-y-auto p-10 space-y-10 scrollbar-hide">
+                {aiMessages.length === 0 && (
+                  <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-6">
+                    <div className="w-16 h-[0.5px] bg-primary/30" />
+                    <p className="max-w-[280px] text-sm text-foreground/40 font-serif italic leading-relaxed">
+                      "Bienvenido a Novo Heritage. Soy su asistente personal. ¿En qué puedo asistirle con su patrimonio hoy?"
+                    </p>
+                    <div className="w-16 h-[0.5px] bg-primary/30" />
                   </div>
-                  <div className="flex items-center gap-2 px-1">
-                    <span className="text-[8px] text-foreground/30 uppercase tracking-widest font-black">
-                      {m.role === "user" ? "Usted" : "Novo AI"}
+                )}
+                
+                {aiMessages.map((m: any) => (
+                  <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    key={m.id}
+                    className={cn(
+                      "flex flex-col gap-3",
+                      m.role === "user" ? "items-end" : "items-start"
+                    )}
+                  >
+                    <div className={cn(
+                      "max-w-[85%] md:max-w-[90%] p-5 md:p-6 text-[13px] md:text-[14px] leading-relaxed relative",
+                      m.role === "user"
+                        ? "bg-primary/10 border border-primary/20 text-foreground font-black tracking-tight rounded-2xl rounded-tr-none shadow-premium"
+                        : "bg-foreground/5 border border-foreground/10 text-foreground/80 font-serif rounded-2xl rounded-tl-none italic"
+                    )}>
+                      {m.content}
+                    </div>
+                    <span className="text-[8px] uppercase tracking-[0.4em] text-foreground/20 font-black px-2">
+                       {m.role === "user" ? "Client Request" : "Concierge Response"}
                     </span>
-                    <span className="w-0.5 h-0.5 rounded-none bg-foreground/20" />
-                    <span className="text-[8px] text-foreground/20 uppercase font-bold">
-                      Justo ahora
-                    </span>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                ))}
 
-              {isLoading && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-3 text-primary/40 text-[10px] px-2 font-black uppercase tracking-widest">
-                  <div className="flex gap-1.5">
-                    <motion.div animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1, 0.8] }} transition={{ repeat: Infinity, duration: 1.5 }} className="w-1.5 h-1.5 bg-primary rounded-none shadow-glow" />
-                    <motion.div animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1, 0.8] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.2 }} className="w-1.5 h-1.5 bg-primary rounded-none shadow-glow" />
-                    <motion.div animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1, 0.8] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.4 }} className="w-1.5 h-1.5 bg-primary rounded-none shadow-glow" />
-                  </div>
-                  <span>Analizando inventario...</span>
-                </motion.div>
-              )}
-            </div>
-
-            {/* INPUT AREA CONCIERGE */}
-            <form onSubmit={handleSubmit} className="p-6 pt-2 border-t border-primary/10 bg-background/50">
-              <div className="relative flex items-center group">
-                <Input
-                  value={input}
-                  onChange={handleInputChange}
-                  placeholder="¿Busca una propiedad en Piantini o Punta Cana?"
-                  className="bg-transparent border-primary/20 text-foreground placeholder-foreground/20 rounded-xl pr-14 focus-visible:ring-primary focus-visible:border-primary h-14 font-sans text-sm shadow-inner transition-all group-focus-within:border-primary/40"
-                  disabled={isLoading}
-                />
-                <Button
-                  type="submit"
-                  disabled={!input.trim() || isLoading}
-                  className="absolute right-2 h-10 w-10 p-0 rounded-lg bg-primary hover:bg-primary/90 text-black shadow-premium-lg transition-all active:scale-90"
-                >
-                  <Send className="w-5 h-5 text-black" />
-                </Button>
+                {isLoading && (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-4 text-primary/60 text-[10px] px-2 font-bold uppercase tracking-[0.3em]">
+                    <div className="flex gap-2">
+                      <motion.div animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1.5 }} className="w-1 h-1 bg-primary rounded-full" />
+                      <motion.div animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.2 }} className="w-1 h-1 bg-primary rounded-full" />
+                      <motion.div animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.4 }} className="w-1 h-1 bg-primary rounded-full" />
+                    </div>
+                    <span>Curating your experience</span>
+                  </motion.div>
+                )}
               </div>
-              <div className="flex items-center justify-between mt-4">
-                <div className="flex items-center gap-2 opacity-20 hover:opacity-100 transition-opacity">
-                   <div className="w-4 h-[1px] bg-foreground/50" />
-                   <p className="text-[8px] font-black uppercase tracking-[0.3em]">Razonamiento SambaNova 405B</p>
-                   <div className="w-4 h-[1px] bg-foreground/50" />
+
+              {/* INPUT AREA - MINIMALIST LUXE */}
+              <div className="p-10 pt-0 bg-gradient-to-t from-background to-transparent">
+                <form onSubmit={handleSubmit} className="relative group">
+                  <Input
+                    value={input}
+                    onChange={handleInputChange}
+                    placeholder="Escriba su consulta aquí..."
+                    className="bg-transparent border-t-0 border-x-0 border-b border-primary/20 rounded-none px-0 py-8 text-lg font-serif italic placeholder:text-foreground/20 focus-visible:ring-0 focus-visible:border-primary transition-all h-auto"
+                    disabled={isLoading}
+                  />
+                  <Button
+                    type="submit"
+                    disabled={!input.trim() || isLoading}
+                    className="absolute right-0 bottom-4 h-10 w-10 p-0 rounded-full bg-transparent hover:bg-primary/10 text-primary transition-all active:scale-90"
+                  >
+                    <ArrowRight className="w-6 h-6" />
+                  </Button>
+                </form>
+                <div className="flex items-center justify-between mt-6 opacity-30">
+                  <p className="text-[8px] font-black uppercase tracking-[0.4em]">Proprietary AI Architecture</p>
+                  <p className="text-[8px] font-black uppercase tracking-[0.4em]">NH-G v4.0</p>
                 </div>
-                <p className="text-[8px] text-foreground/40 font-bold tracking-tighter">SECURE ENCRYPTED PORTAL</p>
               </div>
-            </form>
-          </motion.div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </>
