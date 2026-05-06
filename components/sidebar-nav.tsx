@@ -32,6 +32,21 @@ export function SidebarNav({ isOpen, onClose }: SidebarNavProps) {
         setShowCRM(isStaffMember(user?.email))
     }, [user])
 
+    // Lock/Unlock body scroll via custom events for Lenis compatibility
+    useEffect(() => {
+        if (isOpen) {
+            window.dispatchEvent(new CustomEvent("lock-scroll"))
+            document.body.style.overflow = "hidden"
+        } else {
+            window.dispatchEvent(new CustomEvent("unlock-scroll"))
+            document.body.style.overflow = ""
+        }
+        return () => {
+            document.body.style.overflow = ""
+            window.dispatchEvent(new CustomEvent("unlock-scroll"))
+        }
+    }, [isOpen])
+
     const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
         if (href.startsWith("#")) {
             e.preventDefault()
@@ -89,8 +104,11 @@ export function SidebarNav({ isOpen, onClose }: SidebarNavProps) {
                             </button>
                         </div>
 
-                        {/* Navigation Links */}
-                        <nav className="flex-1 overflow-y-auto py-12 px-8">
+                        {/* Navigation Links - data-lenis-prevent ensures this area gets scroll priority */}
+                        <nav 
+                            className="flex-1 overflow-y-auto overscroll-contain py-12 px-8 custom-scrollbar" 
+                            data-lenis-prevent
+                        >
                             <div className="flex flex-col gap-2">
                                 {menuItems.map((item, index) => (
                                     <motion.div
