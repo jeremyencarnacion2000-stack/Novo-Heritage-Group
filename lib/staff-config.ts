@@ -6,16 +6,11 @@
  * the CRM button becomes visible in the navigation bar.
  */
 
-// Authorized staff email domains and individual emails
-const STAFF_DOMAINS = [
-  "@novoheritage.com.do",
-  "@novoheritagegroup.com",
-]
-
+// Authorized staff emails ONLY
 const STAFF_EMAILS = [
-  "jeremyencarnacion2000@gmail.com",
-  "angelluisencarnacion2000@gmail.com",
-  // Add more individual staff emails here
+  "jorddyr.novoheritage@gmail.com",
+  "novoheritagesales@gmail.com",
+  "angelluis.encarnacion2000@gmail.com",
 ]
 
 /**
@@ -25,13 +20,8 @@ export function isStaffMember(email: string | null | undefined): boolean {
   if (!email) return false
   const lower = email.toLowerCase()
   
-  // Check individual emails
-  if (STAFF_EMAILS.some(e => e.toLowerCase() === lower)) return true
-  
-  // Check authorized domains
-  if (STAFF_DOMAINS.some(domain => lower.endsWith(domain.toLowerCase()))) return true
-  
-  return false
+  // Check individual emails exactly
+  return STAFF_EMAILS.some(e => e.toLowerCase() === lower)
 }
 
 /**
