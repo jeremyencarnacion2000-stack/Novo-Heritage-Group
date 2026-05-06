@@ -36,7 +36,6 @@ export function isStaffMember(email: string | null | undefined): boolean {
 
 /**
  * Bitrix24 CRM Portal URL
- * This is the URL that staff members will be directed to when clicking the CRM button.
  * Update this to match your Bitrix24 portal address.
  */
-export const BITRIX_CRM_URL = "https://novoheritage.bitrix24.com"
+export const BITRIX_CRM_URL = "https://novoheritagerealty.bitrix24.es/online/"
