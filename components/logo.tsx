@@ -3,13 +3,7 @@ import Image from "next/image"
 export const Logo = ({ className }: { className?: string }) => {
   return (
     <div 
-      className={`relative ${className}`}
-      style={{ 
-        height: '3.5rem', 
-        width: '12rem',
-        minHeight: '40px',
-        minWidth: '140px'
-      }}
+      className={`relative ${className || 'h-12 w-48'}`}
     >
       <Image
         src="/Logo Novo Heritage.svg"

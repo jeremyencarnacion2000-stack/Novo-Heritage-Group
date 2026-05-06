@@ -77,7 +77,7 @@ export function Hero({ introFinished, onIntroComplete }: HeroProps) {
                />
 
                {/* Smart Glass Mask over 'Veo' watermark */}
-               <div className="absolute bottom-[2%] right-[2%] md:bottom-8 md:right-8 w-16 md:w-20 h-6 md:h-8 backdrop-blur-3xl bg-background/20 rounded z-10 border border-white/5 flex items-center justify-center">
+               <div className="absolute bottom-[2%] right-[2%] translate-x-[3px] md:translate-x-0 md:bottom-8 md:right-8 w-16 md:w-20 h-6 md:h-8 backdrop-blur-3xl bg-background/20 rounded z-10 border border-white/5 flex items-center justify-center">
                   <div className="w-1.5 h-1.5 rounded-full bg-white/30 animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
                </div>
            </div>
