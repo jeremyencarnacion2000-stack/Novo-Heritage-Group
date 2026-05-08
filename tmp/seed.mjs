@@ -2,7 +2,7 @@ import postgres from 'postgres';
 import fs from 'fs';
 import path from 'path';
 
-// Manual env parse to avoid dependency issues
+// Manual env parse
 const envPath = path.resolve('.env.local');
 const envContent = fs.readFileSync(envPath, 'utf8');
 const env = {};
@@ -23,8 +23,9 @@ if (!url) {
 const sql = postgres(url, { ssl: 'require' });
 
 async function seed() {
-    console.log("Seeding CockroachDB from .env.local...");
+    console.log("Seeding CockroachDB...");
 
+    // 1. Ensure table exists
     await sql`
         CREATE TABLE IF NOT EXISTS public.inventario_digital (
             id SERIAL PRIMARY KEY,
@@ -44,7 +45,17 @@ async function seed() {
         );
     `;
 
-    // Clear existing to avoid duplicates during this task
+    // 2. Ensure extra columns exist (in case table was created previously without them)
+    try {
+        await sql`ALTER TABLE public.inventario_digital ADD COLUMN IF NOT EXISTS fuente VARCHAR(100) DEFAULT 'seeder'`;
+        await sql`ALTER TABLE public.inventario_digital ADD COLUMN IF NOT EXISTS es_constructora_oficial BOOLEAN DEFAULT false`;
+        await sql`ALTER TABLE public.inventario_digital ADD COLUMN IF NOT EXISTS featured BOOLEAN DEFAULT true`;
+        await sql`ALTER TABLE public.inventario_digital ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`;
+    } catch (e) {
+        console.log("Note: Some columns might already exist.");
+    }
+
+    // 3. Clear existing seeder data
     await sql`DELETE FROM public.inventario_digital WHERE fuente = 'seeder'`;
 
     const properties = [
@@ -57,7 +68,7 @@ async function seed() {
             banos: 6,
             area: 950,
             desc: "Impresionante villa de lujo con diseño ultramoderno, techos de doble altura y piscina infinita con vistas al mar. Ubicada en el exclusivo enclave de Cap Cana.",
-            multimedia: ["/luxury_modern_villa_renaissance.png"]
+            multimedia: ["https://images.unsplash.com/photo-1613490908571-9ce224eba83a?q=80&w=2070&auto=format&fit=crop"]
         },
         {
             titulo: "Penthouse Naco Signature",
@@ -68,7 +79,7 @@ async function seed() {
             banos: 3,
             area: 320,
             desc: "Penthouse de dos niveles con vistas 360 de la ciudad. Acabados en mármol italiano, cocina de diseño y domótica integrada.",
-            multimedia: ["/modern_minimalist_house_pushkino.png"]
+            multimedia: ["https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=2070&auto=format&fit=crop"]
         },
         {
             titulo: "Altos de Chavón Heritage",
@@ -79,7 +90,7 @@ async function seed() {
             banos: 5,
             area: 550,
             desc: "Propiedad clásica inspirada en la arquitectura colonial con comodidades modernas. Extensos jardines y acceso preferencial al club de golf.",
-            multimedia: ["/contemporary_house_barminka.png"]
+            multimedia: ["https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2075&auto=format&fit=crop"]
         },
         {
             titulo: "Venice Luxury Loft",
@@ -90,36 +101,25 @@ async function seed() {
             banos: 2,
             area: 145,
             desc: "Loft ejecutivo con ventanales de piso a techo. Ubicación envidiable cerca de los principales centros comerciales de la ciudad.",
-            multimedia: ["/elegant_modern_home_venice.png"]
-        },
-        {
-            titulo: "Ocean View Estate - Las Terrenas",
-            proyecto: "Terrenas Legacy",
-            precio: "$1,200,000",
-            zona: "Las Terrenas",
-            hab: 4,
-            banos: 4,
-            area: 400,
-            desc: "Santuario tropical frente al mar. Diseño abierto que integra la naturaleza con el lujo contemporáneo.",
-            multimedia: ["/luxury-modern-villa-renaissance.png"]
+            multimedia: ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop"]
         }
     ];
 
     for (const p of properties) {
         await sql`
             INSERT INTO public.inventario_digital (
-                titulo_profesional, nombre_proyecto, precio, zona, habitaciones, banos, area_m2, descripcion_limpia, multimedia, es_constructora_oficial, featured
+                titulo_profesional, nombre_proyecto, precio, zona, habitaciones, banos, area_m2, descripcion_limpia, multimedia, es_constructora_oficial, featured, fuente
             ) VALUES (
-                ${p.titulo}, ${p.proyecto}, ${p.precio}, ${p.zona}, ${p.hab}, ${p.banos}, ${p.area}, ${p.desc}, ${JSON.stringify(p.multimedia)}, true, true
+                ${p.titulo}, ${p.proyecto}, ${p.precio}, ${p.zona}, ${p.hab}, ${p.banos}, ${p.area}, ${p.desc}, ${JSON.stringify(p.multimedia)}, true, true, 'seeder'
             )
         `;
     }
 
-    console.log("Seeding complete successfully with clean env.");
+    console.log("✅ Seeding complete successfully.");
     process.exit(0);
 }
 
 seed().catch(err => {
-    console.error("Seeding error:", err);
+    console.error("❌ Seeding error:", err);
     process.exit(1);
 });

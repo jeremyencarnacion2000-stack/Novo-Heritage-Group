@@ -170,27 +170,27 @@
 
 /* Scrollbar styling - Ultra minimal premium */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 6px !important;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: transparent !important;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, transparent, #E6C15A, transparent);
-  border-radius: 10px;
-  border: none;
+  background: linear-gradient(180deg, transparent, #E6C15A, transparent) !important;
+  border-radius: 10px !important;
+  border: none !important;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #E6C15A, #b8860b);
+  background: linear-gradient(180deg, #E6C15A, #b8860b) !important;
 }
 
 /* Custom scrollbar for Firefox */
 * {
-  scrollbar-width: thin;
-  scrollbar-color: #E6C15A transparent;
+  scrollbar-width: thin !important;
+  scrollbar-color: #E6C15A transparent !important;
 }
 
 /* Added custom text selection styling with orange background and dark text */
