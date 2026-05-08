@@ -1,14 +1,16 @@
 import postgres from 'postgres';
 
 /**
- * CockroachDB Connector — Properties & Carousels
+ * CockroachDB Connector — Unified Backend Database
  * 
  * Used for:
  *  - inventario_digital (n8n multimedia ingestor)
- *  - Property listings & carousels
- *  - Dropbox media references
+ *  - leads (lead capture & conversion)
+ *  - perfil_usuario (AI concierge context & tracking)
+ *  - Property listings & real-time RAG context
  * 
- * NOT used for: auth, leads, chat profiles, tracking (those use Neon via lib/db.ts)
+ * This is the primary database for Novo Heritage Group, ensuring
+ * stability and zero-limit scalability on the free tier.
  */
 
 let sql: any;

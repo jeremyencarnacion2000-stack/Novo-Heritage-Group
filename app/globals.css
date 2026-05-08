@@ -168,29 +168,29 @@
   animation: shiny-text 3s ease-in-out infinite;
 }
 
-/* Scrollbar styling */
+/* Scrollbar styling - Ultra minimal premium */
 ::-webkit-scrollbar {
-  width: 12px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: hsl(var(--background));
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #f5d042, #e6b800, #b8860b);
-  border-radius: 6px;
-  border: 2px solid hsl(var(--background));
+  background: linear-gradient(180deg, transparent, #E6C15A, transparent);
+  border-radius: 10px;
+  border: none;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #e6b800, #b8860b, #8b6f00);
+  background: linear-gradient(180deg, #E6C15A, #b8860b);
 }
 
 /* Custom scrollbar for Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #f5d042 hsl(var(--background));
+  scrollbar-color: #E6C15A transparent;
 }
 
 /* Added custom text selection styling with orange background and dark text */
