@@ -15,7 +15,7 @@ function ParallaxImage({ src, alt, accent }: { src: string, alt: string, accent:
     offset: ["start end", "end start"]
   })
 
-  const y = useTransform(scrollYProgress, [0, 1], ["-10%", "10%"])
+  const y = useTransform(scrollYProgress, [0, 1], ["-15%", "15%"])
 
   return (
     <div ref={ref} className="col-span-12 lg:col-span-7">
@@ -24,7 +24,7 @@ function ParallaxImage({ src, alt, accent }: { src: string, alt: string, accent:
       >
         <motion.div
           style={{ y }}
-          className="absolute inset-[-10%] w-[120%] h-[120%] transition-transform duration-1000 group-hover:scale-105 will-change-transform"
+          className="absolute inset-[-15%] w-[130%] h-[130%] transition-transform duration-1000 group-hover:scale-105 will-change-transform"
         >
           <NextImage
             src={src}

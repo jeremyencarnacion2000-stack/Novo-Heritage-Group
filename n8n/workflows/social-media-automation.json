@@ -1,5 +1,5 @@
 {
-  "name": "Social Media Daily Auto-Poster - Novo Heritage",
+  "name": "Social Media Daily Auto-Poster - Novo Heritage (Inventory Sync)",
   "nodes": [
     {
       "parameters": {
@@ -16,29 +16,50 @@
       "name": "Daily 9AM Trigger",
       "type": "n8n-nodes-base.cron",
       "typeVersion": 1.1,
-      "position": [250, 300]
+      "position": [0, 300]
     },
     {
       "parameters": {
-        "model": "gpt-4",
+        "operation": "executeQuery",
+        "query": "SELECT * FROM public.inventario_digital WHERE es_constructora_oficial = true ORDER BY created_at DESC LIMIT 5;",
+        "options": {}
+      },
+      "id": "get-properties",
+      "name": "Fetch Inventory (CockroachDB)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [200, 300],
+      "credentials": {
+        "postgres": {
+          "id": "CvfAMQyiDbqrANJd",
+          "name": "CockroachDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "gpt-4-turbo",
         "messages": {
           "values": [
             {
               "role": "system",
-              "content": "Eres el Social Media Manager de Novo Heritage Group, agencia premium de bienes raíces. Tu tono es: profesional, elegante, asesor experto. Usa la paleta de colores: Dorado (#D4AF37), Negro (#0A0A0A), Blanco.\n\nREGLAS:\n1. Publica contenido de valor: tips de inversión, propiedades destacadas, consejos de diseño\n2. Incluye siempre un llamado a la acción suave\n3. Usa máximo 2-3 párrafos\n4. Genera un título atractivo\n5. Añade 3 hashtags relevantes\n\nFORMATO DE RESPUESTA JSON:\n{\"title\": \"Título del post\", \"content\": \"Texto del post\", \"hashtags\": [\"#BienesRaices\", \"#Inversión\"]}"
+              "content": "Eres el Lead Content Strategist de Novo Heritage Group. Tu objetivo es convertir el inventario real en deseo aspiracional.\n\nESTILO:\n- Editorial de lujo (Tipo AD o Vogue Living)\n- No uses clichés de venta barata\n- Resalta la plusvalía y el diseño\n- Paleta visual: Oro, Negro, Blanco.\n\nENTRADA:\nRecibirás detalles de una propiedad real de nuestra base de datos."
             },
             {
               "role": "user",
-              "content": "Genera el contenido para hoy {{ $now.format('DD/MM/YYYY') }}. Incluye una propiedad destacada o consejo de inversión premium."
-            }\n          ]
+              "content": "=Genera un post cautivador para la propiedad:\nProyecto: {{ $json.titulo_profesional }}\nUbicación: {{ $json.zona }}\nPrecio: {{ $json.precio }} USD\nCaracterísticas: {{ $json.habitaciones }} hab, {{ $json.banos }} baños, {{ $json.area_m2 }} m2.\nDescripción base: {{ $json.descripcion_limpia }}\n\nFORMATO JSON:\n{\"title\": \"Título Impactante\", \"content\": \"Texto sofisticado con emojis premium\", \"hashtags\": [\"#NovoHeritage\", \"#RealEstateRD\", \"#LuxuryLiving\"]}"
+            }
+          ]
         },
-        "options": {}
+        "options": {
+          "temperature": 0.7
+        }
       },
       "id": "ai-content-generator",
       "name": "🎯 AI Content Generator",
       "type": "@n8n/nodes-langchain.openAi",
       "typeVersion": 1,
-      "position": [500, 300],
+      "position": [450, 300],
       "credentials": {
         "openAiApi": "OpenAI"
       }
@@ -47,7 +68,7 @@
       "parameters": {
         "operation": "generateImage",
         "model": "dall-e-3",
-        "prompt": "Diseño premium para redes sociales de bienes raíces. Paleta: dorado (#D4AF37) y negro (#0A0A0A). Estilo: elegancia, arquitectura moderna, minimalismo lujoso. Texto: '{{ $('AI Content Generator').item.json.title }}' - tipografía serif elegante. Proporción 1:1 para Instagram/Facebook, fondo oscuro con detalles dorados sutiles, fotografía de propiedad premium o representación 3D sofisticada.",
+        "prompt": "=Crea una imagen fotorrealista de alta gama estilo 'lifestyle luxury' basada en: {{ $node[\"Fetch Inventory (CockroachDB)\"].json.titulo_profesional }}. Entorno: {{ $node[\"Fetch Inventory (CockroachDB)\"].json.zona }}. Arquitectura moderna, iluminación dorada de atardecer, atmósfera Novo Heritage (Elegante, Poderosa, Minimalista). Sin texto en la imagen.",
         "size": "1024x1024",
         "quality": "hd",
         "style": "vivid"
@@ -56,26 +77,26 @@
       "name": "🎨 Generate Branded Image",
       "type": "@n8n/nodes-langchain.openAi",
       "typeVersion": 1,
-      "position": [750, 200],
+      "position": [700, 200],
       "credentials": {
         "openAiApi": "OpenAI"
       }
     },
     {
       "parameters": {
-        "jsCode": "const data = items[0].json;\nreturn {\n  json: {\n    title: data.title,\n    content: data.content,\n    hashtags: data.hashtags.join(' '),\n    fullPost: `${data.title}\n\n${data.content}\n\n${data.hashtags.join(' ')}`,\n    imagePrompt: `Propiedad premium ${data.title}`\n  }\n};"
+        "jsCode": "const data = items[0].json;\nreturn {\n  json: {\n    title: data.title,\n    content: data.content,\n    hashtags: data.hashtags.join(' '),\n    fullPost: `${data.title}\n\n${data.content}\n\n${data.hashtags.join(' ')}`\n  }\n};"
       },
       "id": "format-data",
       "name": "🔄 Format Data",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [750, 350]
+      "position": [700, 350]
     },
     {
       "parameters": {
         "authentication": "oAuth2",
         "operation": "post",
-        "message": "{{ $('Format Data').item.json.fullPost }}",
+        "message": "={{ $json.fullPost }}",
         "additionalFields": {
           "media": {
             "url": "={{ $('Upload Image').item.json.secure_url }}"
@@ -86,7 +107,7 @@
       "name": "🐦 Post to X/Twitter",
       "type": "n8n-nodes-base.twitter",
       "typeVersion": 2,
-      "position": [1100, 150],
+      "position": [1150, 150],
       "credentials": {
         "twitterOAuth2Api": "Twitter"
       }
@@ -97,13 +118,13 @@
         "resource": "post",
         "operation": "create",
         "author": "me",
-        "message": "{{ $('Format Data').item.json.fullPost }}"
+        "message": "={{ $json.fullPost }}"
       },
       "id": "post-linkedin",
       "name": "💼 Post to LinkedIn",
       "type": "n8n-nodes-base.linkedIn",
       "typeVersion": 2,
-      "position": [1100, 250],
+      "position": [1150, 250],
       "credentials": {
         "linkedInOAuth2Api": "LinkedIn"
       }
@@ -119,7 +140,7 @@
       "name": "☁️ Upload Image",
       "type": "n8n-nodes-base.cloudinary",
       "typeVersion": 1,
-      "position": [1000, 350],
+      "position": [950, 400],
       "credentials": {
         "cloudinaryApi": "Cloudinary"
       }
@@ -134,15 +155,11 @@
           "parameters": [
             {
               "name": "url",
-              "value": "={{ $('Upload Image').item.json.secure_url }}"
+              "value": "={{ $json.secure_url }}"
             },
             {
               "name": "caption",
-              "value": "{{ $('Format Data').item.json.fullPost }}"
-            },
-            {
-              "name": "access_token",
-              "value": "={{ $('Upload Image').item.json.access_token }}"
+              "value": "={{ $('Format Data').item.json.fullPost }}"
             }
           ]
         },
@@ -152,7 +169,7 @@
       "name": "📘 Post to Facebook",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
-      "position": [1100, 350],
+      "position": [1150, 350],
       "credentials": {
         "oAuth2Api": "Facebook"
       }
@@ -166,29 +183,39 @@
       "name": "📸 Post to Instagram",
       "type": "n8n-nodes-base.facebookGraphApi",
       "typeVersion": 1,
-      "position": [1100, 450],
+      "position": [1150, 450],
       "credentials": {
         "oAuth2Api": "Instagram"
-      },
-      "notes": "Usar Facebook Graph API para Instagram Business"
+      }
     },
     {
       "parameters": {
         "conditions": {
-          "boolean": [
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
             {
-              "value1": "={{ $('Format Data').item.json.content.length }}",
-              "operation": "larger",
-              "value2": 10
+              "id": "902d293f-366a-4934-be99-4c0cf9e3c97e",
+              "leftValue": "={{ $json.content.length }}",
+              "rightValue": 10,
+              "operator": {
+                "type": "number",
+                "operation": "larger"
+              }
             }
-          ]
-        }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
       },
       "id": "validate-content",
       "name": "✅ Validate Content",
       "type": "n8n-nodes-base.if",
-      "typeVersion": 1,
-      "position": [925, 300]
+      "typeVersion": 2,
+      "position": [850, 250]
     }
   ],
   "connections": {
@@ -196,82 +223,18 @@
       "main": [
         [
           {
+            "node": "Fetch Inventory (CockroachDB)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Inventory (CockroachDB)": {
+      "main": [
+        [
+          {
             "node": "🎯 AI Content Generator",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "🎯 AI Content Generator": {
-      "main": [
-        [
-          {
-            "node": "🔄 Format Data",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "🎨 Generate Branded Image",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "🔄 Format Data": {
-      "main": [
-        [
-          {
-            "node": "✅ Validate Content",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "🎨 Generate Branded Image": {
-      "main": [
-        [
-          {
-            "node": "☁️ Upload Image",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "☁️ Upload Image": {
-      "main": [
-        [
-          {
-            "node": "✅ Validate Content",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "✅ Validate Content": {
-      "main": [
-        [
-          {
-            "node": "🐦 Post to X/Twitter",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "💼 Post to LinkedIn",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "📘 Post to Facebook",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "📸 Post to Instagram",
             "type": "main",
             "index": 0
           }

@@ -126,6 +126,47 @@
     },
     {
       "parameters": {
+        "method": "POST",
+        "url": "https://[YOUR_BITRIX_PORTAL].bitrix24.es/rest/[USER_ID]/[SECRET]/crm.lead.add.json",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "fields[TITLE]",
+              "value": "=Nuevo Inmueble: {{ $node[\"AI Filter & Extract (Groq)\"].json.output.titulo_profesional }}"
+            },
+            {
+              "name": "fields[NAME]",
+              "value": "={{ $node[\"AI Filter & Extract (Groq)\"].json.output.constructora || 'Contacto Inmobiliario' }}"
+            },
+            {
+              "name": "fields[OPPORTUNITY]",
+              "value": "={{ $node[\"AI Filter & Extract (Groq)\"].json.output.precio }}"
+            },
+            {
+              "name": "fields[CURRENCY_ID]",
+              "value": "USD"
+            },
+            {
+              "name": "fields[COMMENTS]",
+              "value": "=Detalles del Inmueble:\n- Ubicación: {{ $node[\"AI Filter & Extract (Groq)\"].json.output.ubicacion }}\n- Área: {{ $node[\"AI Filter & Extract (Groq)\"].json.output.area_m2 }}m2\n- Habitaciones: {{ $node[\"AI Filter & Extract (Groq)\"].json.output.habitaciones }}\n- Baños: {{ $node[\"AI Filter & Extract (Groq)\"].json.output.banos }}\n\nDescripción AI:\n{{ $node[\"AI Filter & Extract (Groq)\"].json.output.descripcion }}"
+            },
+            {
+              "name": "fields[SOURCE_ID]",
+              "value": "WhatsApp"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bitrix24-lead",
+      "name": "Create Bitrix24 Lead",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1350, 420]
+    },
+    {
+      "parameters": {
         "content": "=Rechazado por IA. Motivo: {{ $json.output.motivo_rechazo }}"
       },
       "id": "reject-log",
@@ -192,6 +233,17 @@
         [
           {
             "node": "Log Rechazo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to CockroachDB": {
+      "main": [
+        [
+          {
+            "node": "Create Bitrix24 Lead",
             "type": "main",
             "index": 0
           }

@@ -156,7 +156,7 @@ export default function TurismoClientPage() {
             transition={{ duration: 1 }}
           >
             <div className="inline-block px-4 py-1.5 mb-8 border border-primary/20 glass-premium">
-              <span className="text-[10px] tracking-[0.4em] uppercase font-bold text-foreground/60">Novo Heritage Group</span>
+              <span className="text-[10px] tracking-[0.4em] uppercase font-bold text-foreground/60">Travel & Resorts</span>
             </div>
 
             <PremiumHeading as="h1" className="mb-10 leading-[0.9]">

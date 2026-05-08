@@ -25,6 +25,7 @@ import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } 
 import { BookingForms } from "@/components/booking-forms"
 import { PremiumHeading, PremiumText } from "@/components/premium-typography"
 import PropertyDetailModal from "@/components/property-detail-modal"
+import { cn } from "@/lib/utils"
 
 const ParallaxCard = ({ children, image, title, className, onClick, overlayOpacity = 0.4 }: any) => {
   const ref = React.useRef(null)
@@ -76,6 +77,7 @@ export default function BienesRaicesClientPage({ properties: initialProperties }
   const [isLoadingProps, setIsLoadingProps] = useState<boolean>(!initialProperties)
   const [activeScene, setActiveScene] = useState<'hero' | 'gallery'>('hero')
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [panelTab, setPanelTab] = useState<'catalog' | 'sell'>('catalog')
 
   
   const [services, setServices] = useState<any[]>([
@@ -183,57 +185,84 @@ export default function BienesRaicesClientPage({ properties: initialProperties }
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setActiveScene('hero')}
-              className="fixed inset-0 bg-background/80 backdrop-blur-md z-[10000]"
+              className="fixed inset-0 bg-background/40 backdrop-blur-sm z-[10000]"
             />
             <motion.div
               initial={{ x: '100%', opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: '100%', opacity: 0 }}
               transition={{ duration: 1.2, ease: [0.19, 1, 0.22, 1] }}
-              className="fixed right-0 top-0 w-full md:w-[45%] h-[100vh] glass-premium z-[10001] border-l border-primary/20 overflow-y-auto overscroll-contain shadow-[-50px_0_100px_rgba(0,0,0,0.5)]"
+              className="fixed right-0 top-0 w-full md:w-[50%] lg:w-[45%] h-[100vh] glass-premium z-[10001] border-l border-primary/20 overflow-y-auto overscroll-contain shadow-[-50px_0_100px_rgba(0,0,0,0.5)]"
               data-lenis-prevent
             >
-              <div className="p-12 md:p-20 pt-32">
-                <div className="flex justify-between items-center mb-20">
-                  <div className="space-y-2">
-                    <span className="text-[10px] uppercase tracking-[0.6em] text-primary font-black block">Colección Privada</span>
-                    <h2 className="text-5xl md:text-6xl font-light font-serif text-white leading-none">Selecciones <br/><span className="italic text-primary/80">VIP</span></h2>
-                  </div>
-                  <button
-                    onClick={() => setActiveScene('hero')}
-                    className="p-5 border border-white/10 glass-premium hover:bg-primary hover:text-black transition-all duration-700 group hover:rotate-90"
+               <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-white/5 flex px-12 py-6 gap-8 overflow-x-auto scrollbar-hide">
+                  <button 
+                    onClick={() => setPanelTab('catalog')}
+                    className={cn("text-[10px] uppercase tracking-[0.4em] font-black pb-2 transition-all", panelTab === 'catalog' ? "text-primary border-b-2 border-primary" : "text-white/40 hover:text-white")}
                   >
-                    <ArrowRight className="w-6 h-6 rotate-180" />
+                    Catálogo VIP
                   </button>
-                </div>
+                  <button 
+                    onClick={() => setPanelTab('sell')}
+                    className={cn("text-[10px] uppercase tracking-[0.4em] font-black pb-2 transition-all", panelTab === 'sell' ? "text-primary border-b-2 border-primary" : "text-white/40 hover:text-white")}
+                  >
+                    Alquilar o Vender
+                  </button>
+                  <button 
+                    onClick={() => setActiveScene('hero')}
+                    className="ml-auto p-2 hover:bg-primary hover:text-black transition-all"
+                  >
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+               </div>
 
-                <div className="grid gap-12">
-                  {(properties.length > 0 ? properties.slice(0, 5) : collections).map((item: any, idx: number) => (
-                    <Link href={item.id ? `/bienes-raices/propiedad/${item.id}` : "#propiedades"} key={item.id || item.title} onClick={() => {if(!item.id) scrollToGallery()}}>
-                      <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.4 + idx * 0.15, duration: 0.8 }}
-                        className="group cursor-pointer flex gap-10 items-center pb-12 border-b border-white/5 hover:border-primary/30 transition-all duration-700"
-                      >
-                        <div className="relative w-32 h-32 overflow-hidden border border-white/10 bg-black/40 shadow-premium">
-                          <Image src={item.image || "/placeholder.jpg"} alt={item.title} fill className="object-cover scale-110 group-hover:scale-100 grayscale-[0.5] group-hover:grayscale-0 transition-all duration-1000" />
-                        </div>
-                        <div className="flex-1 space-y-3">
-                          <h4 className="text-2xl md:text-3xl font-serif text-white mb-1 line-clamp-1 group-hover:text-primary transition-colors">{item.title}</h4>
-                          <div className="flex items-center gap-4">
-                            <span className="text-[9px] text-white/40 uppercase tracking-[0.4em]">{item.sector || item.subtitle || "Premium"}</span>
-                            <div className="w-8 h-[1px] bg-primary/20" />
-                            <span className="text-[10px] font-bold text-primary tracking-widest">Ver Detalles</span>
-                          </div>
-                        </div>
-                        <div className="w-12 h-12 flex items-center justify-center border border-white/10 rounded-full opacity-0 group-hover:opacity-100 group-hover:border-primary transition-all duration-700">
-                          <ArrowRight className="w-4 h-4 text-primary group-hover:translate-x-1" />
-                        </div>
-                      </motion.div>
-                    </Link>
-                  ))}
-                </div>
+              <div className="p-12 md:p-20 pt-12">
+                {panelTab === 'catalog' ? (
+                  <>
+                    <div className="flex justify-between items-center mb-20 text-balance">
+                      <div className="space-y-2">
+                        <span className="text-[10px] uppercase tracking-[0.6em] text-primary font-black block">Colección Privada</span>
+                        <h2 className="text-5xl md:text-6xl font-light font-serif text-white leading-none">Selecciones <br/><span className="italic text-primary/80">VIP</span></h2>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-12">
+                      {(properties.length > 0 ? properties.slice(0, 5) : collections).map((item: any, idx: number) => (
+                        <Link href={item.id ? `/bienes-raices/propiedad/${item.id}` : "#propiedades"} key={item.id || item.title} onClick={() => {if(!item.id) scrollToGallery()}}>
+                          <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 + idx * 0.1, duration: 0.6 }}
+                            className="group cursor-pointer flex gap-10 items-center pb-12 border-b border-white/5 hover:border-primary/30 transition-all duration-700"
+                          >
+                            <div className="relative w-32 h-32 overflow-hidden border border-white/10 bg-black/40 shadow-premium shrink-0">
+                              <Image src={item.image || "/placeholder.jpg"} alt={item.title} fill className="object-cover scale-110 group-hover:scale-100 grayscale-[0.5] group-hover:grayscale-0 transition-all duration-1000" />
+                            </div>
+                            <div className="flex-1 space-y-3">
+                              <h4 className="text-2xl md:text-3xl font-serif text-white mb-1 line-clamp-1 group-hover:text-primary transition-colors">{item.title}</h4>
+                              <div className="flex items-center gap-4">
+                                <span className="text-[9px] text-white/40 uppercase tracking-[0.4em]">{item.sector || item.subtitle || "Premium"}</span>
+                                <div className="w-8 h-[1px] bg-primary/20" />
+                                <span className="text-[10px] font-bold text-primary tracking-widest">Ver Detalles</span>
+                              </div>
+                            </div>
+                            <div className="w-12 h-12 flex items-center justify-center border border-white/10 rounded-full opacity-0 group-hover:opacity-100 group-hover:border-primary transition-all duration-700">
+                              <ArrowRight className="w-4 h-4 text-primary group-hover:translate-x-1" />
+                            </div>
+                          </motion.div>
+                        </Link>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="pt-8"
+                  >
+                    <PropertySellForm />
+                  </motion.div>
+                )}
               </div>
             </motion.div>
           </>
@@ -242,10 +271,10 @@ export default function BienesRaicesClientPage({ properties: initialProperties }
 
       <motion.div 
         animate={{ 
-          x: activeScene === 'gallery' ? '-30%' : 0,
-          scale: activeScene === 'gallery' ? 0.95 : 1,
-          opacity: activeScene === 'gallery' ? 0.4 : 1,
-          filter: activeScene === 'gallery' ? 'blur(10px)' : 'blur(0px)'
+          x: activeScene === 'gallery' ? '-25%' : 0,
+          scale: activeScene === 'gallery' ? 0.97 : 1,
+          opacity: activeScene === 'gallery' ? 0.7 : 1,
+          filter: activeScene === 'gallery' ? 'blur(8px)' : 'blur(0px)'
         }}
         transition={{ duration: 1, ease: [0.19, 1, 0.22, 1] }}
         className="relative z-[10] w-full origin-right"
@@ -287,7 +316,7 @@ export default function BienesRaicesClientPage({ properties: initialProperties }
               transition={{ duration: 0.8 }}
             >
               <div className="inline-block px-6 py-2 mb-10 border border-primary/20 glass-premium">
-                <span className="text-[10px] tracking-[0.5em] uppercase font-black text-primary/80">Legacy Real Estate</span>
+                <span className="text-[10px] tracking-[0.5em] uppercase font-black text-primary/80">Realty & Rentals</span>
               </div>
 
               <PremiumHeading as="h1" className="mb-12 leading-[0.85] text-7xl md:text-9xl tracking-tighter">
