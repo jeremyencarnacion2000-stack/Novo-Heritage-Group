@@ -50,20 +50,44 @@ export function Header({ isScrolled, onMenuClick, isIntroFinished = true }: Head
         </Link>
 
         <nav className={`flex items-center gap-8 border-l pl-8 h-8 transition-colors duration-500 ${isScrolled ? "border-white/20" : "border-foreground/10"}`}>
-          {[
-            { label: "Nosotros", href: "/nosotros" },
-            { label: "Seguros", href: "/seguros" },
-            { label: "Inmuebles", href: "/bienes-raices" },
-            { label: "Turismo", href: "/turismo" },
-          ].map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className="text-xs font-bold uppercase tracking-[0.2em] transition-colors duration-300 text-white/70 hover:text-white"
-            >
-              {item.label}
-            </Link>
-          ))}
+          <div className="flex items-center gap-8">
+            {/* Nosotros Dropdown */}
+            <div className="relative group">
+              <Link
+                href="/nosotros"
+                className="text-xs font-bold uppercase tracking-[0.2em] transition-colors duration-300 text-white/70 hover:text-white"
+              >
+                Nosotros
+              </Link>
+              
+              {/* Dropdown Menu */}
+              <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-300 transform scale-95 group-hover:scale-100">
+                <div className="glass-premium p-1 min-w-[120px] shadow-2xl border border-white/10">
+                  <Link
+                    href="/blog"
+                    className="flex items-center justify-center px-4 py-3 text-[10px] font-black uppercase tracking-[0.3em] text-white/60 hover:text-primary hover:bg-white/5 transition-all w-full"
+                  >
+                    Blog
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Other items */}
+            {[
+              { label: "Seguros", href: "/seguros" },
+              { label: "Inmuebles", href: "/bienes-raices" },
+              { label: "Turismo", href: "/turismo" },
+            ].map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                className="text-xs font-bold uppercase tracking-[0.2em] transition-colors duration-300 text-white/70 hover:text-white"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
         </nav>
       </div>
 

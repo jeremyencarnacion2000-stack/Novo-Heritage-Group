@@ -1,5 +1,27 @@
 import { NextResponse } from "next/server"
-import sql from "@/lib/db"
+import cockroachDb from "@/lib/cockroach-db"
+
+// Ensure leads table exists in CockroachDB
+async function ensureLeadsTable() {
+  try {
+    await cockroachDb`
+      CREATE TABLE IF NOT EXISTS public.leads (
+        id SERIAL PRIMARY KEY,
+        division VARCHAR(50) NOT NULL,
+        property_id VARCHAR(50),
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        phone VARCHAR(50),
+        message TEXT,
+        source VARCHAR(100),
+        details JSONB DEFAULT '{}',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+  } catch (e) {
+    console.error("Failed to ensure leads table:", e);
+  }
+}
 
 export async function POST(req: Request) {
   try {
@@ -9,9 +31,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    // 1. Insert into local SQL database
-    const data = await sql`
-      INSERT INTO leads (division, property_id, name, email, phone, message, source)
+    await ensureLeadsTable();
+
+    // 1. Insert into CockroachDB
+    const data = await cockroachDb`
+      INSERT INTO public.leads (division, property_id, name, email, phone, message, source, details)
       VALUES (
         ${body.division}, 
         ${body.propertyId || null}, 
@@ -19,14 +43,15 @@ export async function POST(req: Request) {
         ${body.email}, 
         ${body.phone || null}, 
         ${body.message || null}, 
-        ${body.source || 'web'}
+        ${body.source || 'web'},
+        ${body.details || {}}
       )
       RETURNING *
     `;
 
-    // 2. Forward to Bitrix24 if webhook is configured
+    // 2. Forward to Bitrix24 (Disabled if not configured or paid)
     const bitrixWebhook = process.env.BITRIX24_WEBHOOK_URL;
-    if (bitrixWebhook) {
+    if (bitrixWebhook && !bitrixWebhook.includes('YOUR_BITRIX')) {
       try {
         let enhancedMessage = `División: ${body.division}\nMensaje: ${body.message || 'Sin mensaje'}`;
         if (body.propertyId) enhancedMessage += `\nPropiedad: ${body.propertyId}`;
@@ -34,75 +59,46 @@ export async function POST(req: Request) {
             enhancedMessage += `\n\n--- Detalles Extras ---\n`;
             for (const [key, val] of Object.entries(body.details)) {
                 if (val && typeof val === 'string' && val.trim() !== '') {
-                    // Custom label maps for readability in CRM
-                    const labelMap: Record<string, string> = {
-                        hotel: "Hotel Seleccionado",
-                        hotelImage: "Imagen del Hotel",
-                        hotelRating: "Calificación",
-                        hotelDescription: "Descripción Escaneada",
-                        rooms: "Habitaciones",
-                        guests: "Huéspedes",
-                        adults: "Adultos",
-                        children: "Niños",
-                        roomType: "Tipo de Habitación",
-                        insuranceType: "Tipo de Seguro",
-                        coverageAmount: "Cobertura",
-                        origin: "Origen del Viaje",
-                        destination: "Destino",
-                        travelClass: "Clase de Viaje",
-                        checkIn: "Fecha de Salida",
-                        checkOut: "Fecha de Regreso",
-                    };
-                    const label = labelMap[key] || key;
-                    enhancedMessage += `${label}: ${val}\n`;
+                    enhancedMessage += `${key}: ${val}\n`;
                 }
             }
         }
 
         const bitrixPayload = {
           fields: {
-            "TITLE": `Nuevo Lead - ${body.division.toUpperCase()}`,
+            "TITLE": `Novo Lead - ${body.division.toUpperCase()}`,
             "NAME": body.name,
             "EMAIL": [{ "VALUE": body.email, "VALUE_TYPE": "WORK" }],
             "PHONE": body.phone ? [{ "VALUE": body.phone, "VALUE_TYPE": "WORK" }] : [],
             "COMMENTS": enhancedMessage,
-            "SOURCE_ID": "WEB",
-            "UTM_SOURCE": body.source || 'web'
-          },
-          params: { "REGISTER_SONET_EVENT": "Y" }
+            "SOURCE_ID": "WEB"
+          }
         };
 
-        const bitrixRes = await fetch(bitrixWebhook, {
+        await fetch(bitrixWebhook, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(bitrixPayload)
         });
-
-        if (!bitrixRes.ok) {
-          console.error("Bitrix24 forwarding failed:", await bitrixRes.text());
-        }
       } catch (bitrixError) {
         console.error("Bitrix24 integration error:", bitrixError);
       }
     }
 
-    // 3. Forward full native payload to N8n Webhook
+    // 3. Forward to N8n Webhook (For lead qualification/notification)
     const n8nWebhook = process.env.N8N_WEBHOOK_URL || process.env.N8N_LEADS_WEBHOOK;
     if (n8nWebhook) {
         try {
-            const n8nRes = await fetch(n8nWebhook, {
+            await fetch(n8nWebhook, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     lead_id: data[0].id,
+                    db: 'cockroach',
                     timestamp: new Date().toISOString(),
                     ...body
                 })
             });
-
-            if (!n8nRes.ok) {
-                console.error("N8n forwarding failed:", await n8nRes.text());
-            }
         } catch (n8nError) {
             console.error("N8n integration error:", n8nError);
         }
@@ -114,4 +110,5 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
   }
 }
+
 
