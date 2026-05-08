@@ -168,6 +168,50 @@
   animation: shiny-text 3s ease-in-out infinite;
 }
 
+/* Reset scroll behavior for smooth scroll compatibility */
+body.lenis-scrolling {
+  cursor: grabbing;
+}
+
+.lenis.lenis-smooth {
+  height: auto;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}
+
+/* Fix for double scrollbars */
+html, body {
+  height: 100%;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+/* Ensure only one scrollbar is visible in complex layouts */
+.overflow-y-auto {
+  scrollbar-width: thin !important;
+  scrollbar-color: #E6C15A transparent !important;
+}
+
+.overflow-y-initial {
+  scrollbar-width: none !important;
+}
+
+.overflow-y-initial::-webkit-scrollbar {
+  display: none !important;
+}
+
 /* Scrollbar styling - Ultra minimal premium */
 ::-webkit-scrollbar {
   width: 6px !important;

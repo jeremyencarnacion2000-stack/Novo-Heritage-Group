@@ -37,7 +37,7 @@ export function CRMLayout({ children, currentView, onViewChange, userRole }: CRM
     ]
 
     return (
-        <div className="min-h-screen bg-background flex overflow-hidden">
+        <div className="h-screen bg-background flex overflow-hidden">
             {/* Sidebar */}
             <aside
                 className={cn(
