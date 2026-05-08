@@ -1,97 +1,73 @@
-import { Skeleton } from '@/components/ui/skeleton'
+"use client"
 
-export const metadata = {
-  title: "Cargando - Novo Heritage",
-  description: "Cargando el contenido de Novo Heritage. Por favor espera un momento.",
-  keywords: 'cargando, loading, Novo Heritage',
-  openGraph: {
-    title: 'Cargando - Novo Heritage',
-    description: 'Cargando el contenido de Novo Heritage',
-    url: 'https://novoheritage.com/loading',
-    siteName: 'Novo Heritage',
-    locale: 'es_DO',
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Cargando - Novo Heritage',
-    description: 'Cargando el contenido de Novo Heritage',
-    creator: '@novoheritage',
-  },
-}
+import { motion } from "framer-motion"
+import { Logo } from "@/components/logo"
 
 export default function Loading() {
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header skeleton */}
-      <div className="border-b bg-background/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Skeleton className="h-8 w-32" />
-            <div className="flex items-center gap-4">
-              <Skeleton className="h-8 w-20" />
-              <Skeleton className="h-8 w-20" />
-              <Skeleton className="h-8 w-8 rounded-full" />
-            </div>
-          </div>
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-[#050505] overflow-hidden">
+      {/* Background Accents */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vw] max-w-[800px] max-h-[800px] rounded-full bg-primary/5 blur-[120px] animate-pulse" />
+      </div>
+
+      <div className="relative z-10 flex flex-col items-center">
+        {/* Animated Logo Container */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, filter: "blur(10px)" }}
+          animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+          transition={{ duration: 1.5, ease: "easeOut" }}
+          className="mb-12 relative"
+        >
+          <Logo className="h-16 w-64 md:h-20 md:w-80" />
+          
+          {/* Subtle Shine Effect */}
+          <motion.div 
+            initial={{ left: "-100%" }}
+            animate={{ left: "200%" }}
+            transition={{ duration: 3, repeat: Infinity, ease: "linear", repeatDelay: 1 }}
+            className="absolute top-0 bottom-0 w-20 bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-[-25deg] pointer-events-none"
+          />
+        </motion.div>
+
+        {/* Loading Progress Wrapper */}
+        <div className="w-48 h-px bg-white/10 relative overflow-hidden mb-6">
+          <motion.div
+            initial={{ left: "-100%" }}
+            animate={{ left: "100%" }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-0 bottom-0 w-2/3 bg-gradient-to-r from-transparent via-primary to-transparent"
+          />
+        </div>
+
+        {/* Minimalist Text Branding */}
+        <div className="flex flex-col items-center gap-2">
+          <motion.p 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 1 }}
+            className="text-[10px] uppercase tracking-[0.6em] font-black text-primary/60"
+          >
+            Excelencia Patrimonial
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.3 }}
+            transition={{ delay: 1, duration: 1.5 }}
+            className="flex items-center gap-4 mt-2"
+          >
+            <div className="h-[0.5px] w-8 bg-white/20" />
+            <span className="text-[8px] uppercase tracking-[0.4em] font-bold text-white/40">Secure Line</span>
+            <div className="h-[0.5px] w-8 bg-white/20" />
+          </motion.div>
         </div>
       </div>
 
-      {/* Hero section skeleton */}
-      <div className="min-h-[90vh] flex items-center justify-center py-20 px-4">
-        <div className="text-center max-w-5xl mx-auto">
-          <Skeleton className="h-6 w-32 mx-auto mb-8 rounded-full" />
-          <Skeleton className="h-16 sm:h-20 md:h-24 lg:h-32 w-full mb-8" />
-          <Skeleton className="h-6 w-3/4 mx-auto mb-12" />
-          <div className="flex flex-wrap items-center justify-center gap-4 mb-20">
-            <Skeleton className="h-12 w-32 rounded-full" />
-            <Skeleton className="h-12 w-32 rounded-full" />
-            <Skeleton className="h-12 w-32 rounded-full" />
-          </div>
-          <div className="grid grid-cols-3 gap-8 max-w-3xl mx-auto">
-            <div className="text-center">
-              <Skeleton className="h-8 w-16 mx-auto mb-2" />
-              <Skeleton className="h-4 w-24 mx-auto" />
-            </div>
-            <div className="text-center">
-              <Skeleton className="h-8 w-16 mx-auto mb-2" />
-              <Skeleton className="h-4 w-24 mx-auto" />
-            </div>
-            <div className="text-center">
-              <Skeleton className="h-8 w-16 mx-auto mb-2" />
-              <Skeleton className="h-4 w-24 mx-auto" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Content sections skeleton */}
-      <div className="py-20 px-4">
-        <div className="container mx-auto">
-          <Skeleton className="h-12 w-64 mx-auto mb-16" />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="space-y-4">
-              <Skeleton className="h-48 w-full rounded-lg" />
-              <Skeleton className="h-6 w-3/4" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-2/3" />
-            </div>
-            <div className="space-y-4">
-              <Skeleton className="h-48 w-full rounded-lg" />
-              <Skeleton className="h-6 w-3/4" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-2/3" />
-            </div>
-            <div className="space-y-4">
-              <Skeleton className="h-48 w-full rounded-lg" />
-              <Skeleton className="h-6 w-3/4" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-2/3" />
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Decorative Border Accents */}
+      <div className="absolute top-8 left-8 bottom-8 right-8 border border-white/[0.03] pointer-events-none" />
+      <div className="absolute top-12 left-12 bottom-12 right-12 border border-white/[0.02] pointer-events-none" />
     </div>
   )
 }
+
 
