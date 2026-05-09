@@ -30,7 +30,7 @@ const badges = [
 export function TrustBadges() {
     return (
         <section className="bg-background section-airy border-y border-border/40">
-            <div className="container layout-guide-visual">
+            <div className="container">
                 <div className="layout-grid-12 gap-y-16">
                     {badges.map((badge, index) => (
                         <motion.div

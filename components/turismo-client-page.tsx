@@ -149,7 +149,7 @@ export default function TurismoClientPage() {
           <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/40 to-background" />
         </motion.div>
 
-        <div className="container relative z-10 text-center max-w-7xl mx-auto pt-fixed-header px-4">
+        <div className="container relative z-10 text-center max-w-7xl mx-auto pt-32 lg:pt-48 px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}

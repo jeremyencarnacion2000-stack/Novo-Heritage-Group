@@ -88,7 +88,7 @@ export function Hero({ introFinished, onIntroComplete }: HeroProps) {
       <AnimatePresence>
         {introFinished && (
           <div className="absolute inset-0 z-10 pointer-events-none">
-            <div className="container h-full relative layout-guide-visual">
+            <div className="container h-full relative">
               
               {/* Top Left Label - Architectural Typography */}
               <motion.div

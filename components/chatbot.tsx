@@ -7,10 +7,12 @@ import { useChat } from "@ai-sdk/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 // @ts-ignore
-import { MessageCircle, X, Send, Sparkles, ShieldCheck, ArrowRight } from "lucide-react"
+import { MessageCircle, X, Send, Sparkles, ShieldCheck, ArrowRight, Mic, MicOff } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import { useAuth } from "@/hooks/use-auth"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 
 export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false)
@@ -36,7 +38,52 @@ export default function Chatbot() {
   const handleSubmit = (chatHelpers as any).handleSubmit
   const isLoading = (chatHelpers as any).isLoading
 
+  const [isListening, setIsListening] = useState(false)
+  const recognitionRef = useRef<any>(null)
+
   const scrollRef = useRef<HTMLDivElement>(null)
+  
+  // Set up Speech Recognition
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition()
+        recognitionRef.current.continuous = false
+        recognitionRef.current.interimResults = false
+        recognitionRef.current.lang = 'es-DO'
+        
+        recognitionRef.current.onresult = (event: any) => {
+          const finalTranscript = event.results[event.results.length - 1][0].transcript
+          if (finalTranscript) {
+             const fakeEvent = { target: { value: input ? `${input} ${finalTranscript}` : finalTranscript } }
+             handleInputChange(fakeEvent as any)
+          }
+        }
+
+        recognitionRef.current.onerror = (event: any) => {
+          console.error("Speech parsing error:", event.error)
+          setIsListening(false)
+        }
+        
+        recognitionRef.current.onend = () => setIsListening(false)
+      }
+    }
+  }, [input, handleInputChange])
+
+  const toggleListening = () => {
+    if (isListening) {
+      recognitionRef.current?.stop()
+    } else {
+      try {
+        recognitionRef.current?.start()
+        setIsListening(true)
+      } catch (e) {
+        console.log("Speech recognition failed:", e)
+      }
+    }
+  }
+
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
   }, [aiMessages, isLoading])
@@ -142,12 +189,29 @@ export default function Chatbot() {
                     )}
                   >
                     <div className={cn(
-                      "max-w-[85%] md:max-w-[90%] p-5 md:p-6 text-[13px] md:text-[14px] leading-relaxed relative",
+                      "max-w-[85%] md:max-w-[90%] p-5 md:p-6 text-[13px] md:text-[14px] leading-relaxed relative overflow-hidden",
                       m.role === "user"
                         ? "bg-primary/10 border border-primary/20 text-foreground font-black tracking-tight rounded-2xl rounded-tr-none shadow-premium"
                         : "bg-foreground/5 border border-foreground/10 text-foreground/80 font-serif rounded-2xl rounded-tl-none italic"
                     )}>
-                      {m.content}
+                      {m.role === "user" ? (
+                        m.content
+                      ) : (
+                        <ReactMarkdown 
+                          remarkPlugins={[remarkGfm as any]}
+                          className="prose prose-sm dark:prose-invert prose-p:leading-relaxed prose-a:text-primary hover:prose-a:text-primary/80 prose-img:rounded-xl prose-img:shadow-premium max-w-none"
+                          components={{
+                            img: ({node, ...props}) => (
+                              <img {...props} className="w-full object-cover aspect-video mt-4 rounded-xl shadow-premium border border-primary/20 hover:scale-[1.02] transition-transform duration-500" />
+                            ),
+                            a: ({node, ...props}) => (
+                              <a {...props} target="_blank" rel="noopener noreferrer" className="font-bold underline decoration-primary/30 underline-offset-4 cursor-pointer hover:decoration-primary transition-colors" />
+                            ),
+                          }}
+                        >
+                          {m.content}
+                        </ReactMarkdown>
+                      )}
                     </div>
                     <span className="text-[8px] uppercase tracking-[0.4em] text-foreground/20 font-black px-2">
                        {m.role === "user" ? "Client Request" : "Concierge Response"}
@@ -177,13 +241,24 @@ export default function Chatbot() {
                     className="bg-transparent border-t-0 border-x-0 border-b border-primary/20 rounded-none px-0 py-8 text-lg font-serif italic placeholder:text-foreground/20 focus-visible:ring-0 focus-visible:border-primary transition-all h-auto"
                     disabled={isLoading}
                   />
-                  <Button
-                    type="submit"
-                    disabled={!input.trim() || isLoading}
-                    className="absolute right-0 bottom-4 h-10 w-10 p-0 rounded-full bg-transparent hover:bg-primary/10 text-primary transition-all active:scale-90"
-                  >
-                    <ArrowRight className="w-6 h-6" />
-                  </Button>
+                  <div className="absolute right-0 bottom-3 flex items-center pr-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={toggleListening}
+                      className={cn("h-10 w-10 p-0 rounded-full transition-all mr-1", isListening ? "text-red-500 bg-red-500/10 animate-pulse" : "text-foreground/40 hover:text-primary hover:bg-primary/5")}
+                    >
+                       {isListening ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5 opacity-50" />}
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={!input.trim() || isLoading}
+                      className="h-10 w-10 p-0 rounded-full bg-transparent hover:bg-primary/10 text-primary transition-all active:scale-90"
+                    >
+                      <ArrowRight className="w-6 h-6" />
+                    </Button>
+                  </div>
                 </form>
                 <div className="flex items-center justify-between mt-6 opacity-30">
                   <p className="text-[8px] font-black uppercase tracking-[0.4em]">Proprietary AI Architecture</p>

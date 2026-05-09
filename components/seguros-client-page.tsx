@@ -126,7 +126,7 @@ export default function SegurosClientPage() {
         </div>
       </div>
 
-      <section ref={heroRef} id="seguros-hero" className="relative min-h-screen flex items-center justify-center pt-fixed-header overflow-hidden">
+      <section ref={heroRef} id="seguros-hero" className="relative min-h-screen flex items-center justify-center pt-32 lg:pt-48 overflow-hidden">
         {/* Parallax Background */}
         <motion.div
           style={{ y: bgY }}
@@ -142,7 +142,7 @@ export default function SegurosClientPage() {
           <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/20 to-background z-10" />
         </motion.div>
 
-        <div className="container layout-guide-visual relative z-20">
+        <div className="container relative z-20">
           <div className="layout-grid-12 items-center">
             {/* Text Content */}
             <motion.div
@@ -213,7 +213,7 @@ export default function SegurosClientPage() {
         <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(230,193,90,0.03),transparent_70%)]" />
 
-          <div className="relative z-10 container layout-guide-visual h-full flex flex-col justify-center">
+          <div className="relative z-10 container h-full flex flex-col justify-center">
             <div className="layout-grid-12 items-center h-full">
               {/* Left Side - Decorative Visual */}
               <div className="hidden lg:flex lg:col-span-6 items-center justify-center h-full relative">
@@ -275,7 +275,7 @@ export default function SegurosClientPage() {
 
       {/* Insurance Types Grid */}
       <section className="section-airy relative z-10 bg-background border-y border-border/40">
-        <div className="container layout-guide-visual">
+        <div className="container">
           <div className="text-center mb-24">
             <h2 className="text-6xl md:text-8xl font-light font-serif text-foreground mb-10 tracking-tight">Soluciones <span className="italic text-primary">Premium</span></h2>
             <div className="w-32 h-[0.5px] bg-primary/40 mx-auto" />
@@ -319,7 +319,7 @@ export default function SegurosClientPage() {
       </section>
 
       <section id="planes" className="section-airy relative z-10 bg-background border-b border-border/40">
-        <div className="container layout-guide-visual">
+        <div className="container">
           <div className="text-center mb-24">
             <h2 className="text-6xl md:text-8xl font-light font-serif text-foreground mb-10 tracking-tight">Planes de <span className="italic text-primary">Cobertura</span></h2>
             <div className="w-32 h-[0.5px] bg-primary/40 mx-auto" />
@@ -363,7 +363,7 @@ export default function SegurosClientPage() {
       </section>
 
       <section id="reclamaciones" className="section-airy relative overflow-hidden bg-background">
-        <div className="container layout-guide-visual relative z-10 text-center">
+        <div className="container relative z-10 text-center max-w-5xl mx-auto mt-20 md:mt-32">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}

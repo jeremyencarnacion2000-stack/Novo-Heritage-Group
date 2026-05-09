@@ -82,7 +82,7 @@ export function CategoryShowcase() {
 
   return (
     <section id="servicios" className="bg-background section-airy overflow-hidden">
-      <div className="container layout-guide-visual">
+      <div className="container">
         {/* Header Section */}
         <div className="layout-grid-12 mb-32">
           <div className="col-span-12 lg:col-span-8">

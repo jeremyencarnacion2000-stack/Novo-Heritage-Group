@@ -2,10 +2,10 @@ import { streamText } from "ai"
 import { createOpenAI } from "@ai-sdk/openai"
 import cockroachDb from "@/lib/cockroach-db"
 
-// SambaNova Client (Llama 3.1 405B for Elite Reasoning)
-const sambanova = createOpenAI({
-  apiKey: process.env.SAMBANOVA_API_KEY,
-  baseURL: "https://api.sambanova.ai/v1",
+// OpenRouter Client
+const openrouter = createOpenAI({
+  apiKey: process.env.OPENROUTER_API_KEY,
+  baseURL: "https://openrouter.ai/api/v1",
 })
 
 export const maxDuration = 45
@@ -77,7 +77,7 @@ Personaliza tu asesoría basándote en su historial.`;
     if (foundLocation) {
       const sector = foundLocation.charAt(0).toUpperCase() + foundLocation.slice(1);
       listings = await cockroachDb`
-        SELECT nombre_proyecto, precio, zona, descripcion_limpia, es_constructora_oficial 
+        SELECT id, multimedia, nombre_proyecto, precio, zona, descripcion_limpia, es_constructora_oficial 
         FROM public.inventario_digital 
         WHERE (zona ILIKE ${'%' + sector + '%'} OR nombre_proyecto ILIKE ${'%' + sector + '%'})
           AND nombre_proyecto NOT IN ('Sin nombre', 'Parseo fallido', 'No disponible', '')
@@ -85,7 +85,7 @@ Personaliza tu asesoría basándote en su historial.`;
       `;
     } else {
       listings = await cockroachDb`
-        SELECT nombre_proyecto, precio, zona, descripcion_limpia, es_constructora_oficial 
+        SELECT id, multimedia, nombre_proyecto, precio, zona, descripcion_limpia, es_constructora_oficial 
         FROM public.inventario_digital 
         WHERE descripcion_limpia IS NOT NULL AND LENGTH(descripcion_limpia) > 20
           AND nombre_proyecto NOT IN ('Sin nombre', 'Parseo fallido', 'No disponible', '')
@@ -94,18 +94,36 @@ Personaliza tu asesoría basándote en su historial.`;
     }
     
     if (listings.length > 0) {
-      inventoryContext = `\n\n**INVENTARIO ESTRATÉGICO:**
-${listings.map((l: any) => `- ${l.nombre_proyecto} (${l.zona}): ${l.precio} ${l.es_constructora_oficial ? '✅ Oficial' : ''}\n  ${(l.descripcion_limpia || '').substring(0, 150)}`).join('\n')}
-Menciona estos activos solo si encajan con el perfil del inversor.`;
+      inventoryContext = `\n\n**INVENTARIO ESTRATÉGICO Y REGLAS DE PRESENTACIÓN (¡MUY IMPORTANTE!):**
+
+Para las propiedades en el inventario actual, **SIEMPRE DEBES MOSTRARLAS USANDO ESTE FORMATO MARKDOWN EXACTO**:
+
+[![](URL_PRIMERA_IMAGEN)](https://novo-heritage.vercel.app/bienes-raices/propiedades/ID_PROPIEDAD)
+### [NOMBRE_DEL_PROYECTO](https://novo-heritage.vercel.app/bienes-raices/propiedades/ID_PROPIEDAD)
+**Zona**: ZONA_AQUI | **Precio**: PRECIO_AQUI
+
+A continuación tienes el inventario disponible:
+${listings.map((l: any) => {
+  let img = "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2075&auto=format&fit=crop";
+  try {
+     let parsed = l.multimedia;
+     if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+     if (Array.isArray(parsed) && parsed.length > 0) img = parsed[0];
+     else if (typeof parsed === 'object' && parsed !== null) img = Object.values(parsed)[0] as string;
+  } catch(e) {}
+  return `- ID_PROPIEDAD: ${l.id}\n- NOMBRE_DEL_PROYECTO: ${l.nombre_proyecto}\n- ZONA_AQUI: ${l.zona}\n- PRECIO_AQUI: ${l.precio} ${l.es_constructora_oficial ? '(✅ Oficial)' : ''}\n- URL_PRIMERA_IMAGEN: ${img}\n  ${(l.descripcion_limpia || '').substring(0, 150)}`;
+}).join('\n\n')}
+
+¡Recuerda siempre insertar la imagen clickeable siguiendo estrictamente el formato Markdown solicitado!`;
     }
   } catch (e) {
     console.error("Inventory RAG failed:", e);
   }
 
-  const modelName = hasImage ? "Llama-3.2-11B-Vision-Instruct" : "Meta-Llama-3.1-405B-Instruct";
+  const modelName = hasImage ? "meta-llama/llama-3.2-11b-vision-instruct" : "meta-llama/llama-3.1-405b-instruct";
 
   const result = streamText({
-    model: sambanova(modelName) as any,
+    model: openrouter(modelName) as any,
     system: `Eres "Novo AI", el Concierge de Inversiones de Novo Heritage Group. No eres un simple chatbot; eres un estratega inmobiliario de élite y experto en marketing de lujo.
 
 **MANIFIESTO NOVO AI:**

@@ -35,7 +35,7 @@ async function backfill() {
     console.log("Starting manual backfill to CockroachDB via Ingest API...");
     for (const p of properties) {
         try {
-            const res = await fetch("https://novo-heritage.vercel.app/api/properties/ingest", {
+            const res = await fetch("http://localhost:3001/api/properties/ingest", {
                 method: "POST",
                 headers: { 
                     "Content-Type": "application/json",

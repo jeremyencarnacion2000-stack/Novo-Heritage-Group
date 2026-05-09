@@ -190,14 +190,15 @@ body.lenis-scrolling {
 }
 
 /* Fix for double scrollbars */
-html, body {
-  height: 100%;
+html {
   scroll-padding-top: 15vh; /* Prevent fixed header overlap on scroll anchors */
 }
 
 body {
   overflow-x: hidden;
   position: relative;
+  /* Ensure height adjusts naturally */
+  min-height: 100vh;
 }
 
 /* Ensure only one scrollbar is visible in complex layouts */
@@ -234,10 +235,7 @@ body {
   background: linear-gradient(180deg, #E6C15A, #b8860b, #E6C15A) !important;
 }
 
-/* Global Section Spacing for Fixed Header */
-.pt-fixed-header {
-  padding-top: clamp(8rem, 15vh, 12rem) !important;
-}
+/* Global spacing utility for headers - Deprecated in favor of Tailwind pt-32 lg:pt-48 */
 
 /* Custom scrollbar for Firefox */
 * {
@@ -845,7 +843,7 @@ section,
   box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.4);
 }
 
-/* --- Advanced Layout Guides (12-Line System) --- */
+/* --- Advanced Layout Guides (12-Line System) - Hidden per user request --- */
 .layout-grid-12 {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
@@ -854,29 +852,6 @@ section,
   max-width: 1400px;
   margin-left: auto;
   margin-right: auto;
-}
-
-.layout-guide-visual {
-  position: relative;
-}
-
-.layout-guide-visual::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: linear-gradient(to right, 
-    rgba(230, 193, 90, 0.05) 1px, 
-    transparent 1px
-  );
-  background-size: calc((100% - (11 * 2rem)) / 12 + 2rem) 100%;
-  pointer-events: none;
-  z-index: 50;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.layout-guide-visual:hover::after {
-  opacity: 1;
 }
 
 /* Standardized Airy Spacing */

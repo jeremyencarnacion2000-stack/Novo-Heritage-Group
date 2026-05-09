@@ -312,7 +312,7 @@ export default function BienesRaicesClientPage({ properties: initialProperties }
             <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-transparent to-background" />
           </div>
 
-          <div className="container layout-guide-visual relative z-10 text-center max-w-7xl mx-auto pt-fixed-header">
+          <div className="container relative z-10 text-center max-w-7xl mx-auto pt-32 lg:pt-48">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -331,7 +331,7 @@ export default function BienesRaicesClientPage({ properties: initialProperties }
                 Arquitectura de vanguardia con alma Quisqueyana. <br/>Escenarios para legados familiares.
               </PremiumText>
 
-              <div className="flex flex-col sm:flex-row gap-12 justify-center mt-12 bg-black/20 backdrop-blur-sm p-8 max-w-fit mx-auto border border-white/5">
+              <div className="flex flex-col sm:flex-row gap-12 justify-center mt-4 bg-black/20 backdrop-blur-sm p-8 max-w-fit mx-auto border border-white/5 relative z-20">
                 <button 
                   className="group relative flex items-center justify-between gap-16 px-16 py-6 bg-primary text-black transition-all duration-700 hover:scale-[1.05] rounded-none shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-hidden"
                   onClick={() => setActiveScene('gallery')}

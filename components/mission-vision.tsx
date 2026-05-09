@@ -34,7 +34,7 @@ export function MissionVision() {
 
   return (
     <section className="relative overflow-hidden bg-background section-airy" ref={ref}>
-      <div className="container layout-guide-visual">
+      <div className="container">
         {/* Header Section */}
         <div className="layout-grid-12 mb-32">
           <div className="col-span-12 lg:col-span-8">
