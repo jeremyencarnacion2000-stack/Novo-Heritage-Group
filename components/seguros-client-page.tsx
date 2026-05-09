@@ -126,7 +126,7 @@ export default function SegurosClientPage() {
         </div>
       </div>
 
-      <section ref={heroRef} id="seguros-hero" className="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
+      <section ref={heroRef} id="seguros-hero" className="relative min-h-screen flex items-center justify-center pt-fixed-header overflow-hidden">
         {/* Parallax Background */}
         <motion.div
           style={{ y: bgY }}

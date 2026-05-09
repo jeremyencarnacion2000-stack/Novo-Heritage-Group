@@ -186,10 +186,43 @@ export function PropertySellForm() {
                         <Label className="text-xs font-bold uppercase tracking-widest text-primary/70">Detalles Adicionales & Precio</Label>
                         <Textarea 
                             placeholder="Mencione área (m2), cantidad de habitaciones y expectativa de precio." 
-                            className="min-h-[120px] rounded-none border-primary/20 bg-background p-4"
+                            className="min-h-[100px] rounded-none border-primary/20 bg-background p-4"
                             value={formData.features}
                             onChange={(e) => handleInputChange("features", e.target.value)}
                         />
+                    </div>
+
+                    {/* Photo Upload Section */}
+                    <div className="space-y-4 col-span-1 md:col-span-2 border-t border-primary/10 pt-8 mt-2">
+                        <div className="flex items-center justify-between">
+                            <Label className="text-xs font-bold uppercase tracking-widest text-primary/70 flex items-center gap-2">
+                                <Camera className="w-4 h-4" /> Registro Visual de la Propiedad
+                            </Label>
+                            <span className="text-[10px] text-foreground/40 italic">Mínimo 3 fotos recomendadas</span>
+                        </div>
+                        
+                        <div className="group relative border-2 border-dashed border-primary/10 hover:border-primary/30 transition-all bg-primary/5 p-12 text-center cursor-pointer">
+                            <input 
+                                type="file" 
+                                multiple 
+                                accept="image/*"
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                onChange={(e) => {
+                                    // Simulation of file handling
+                                    const files = e.target.files;
+                                    if (files && files.length > 0) {
+                                        toast.success(`${files.length} imágenes seleccionadas para revisión.`);
+                                    }
+                                }}
+                            />
+                            <div className="flex flex-col items-center gap-3">
+                                <UploadCloud className="w-10 h-10 text-primary/40 group-hover:text-primary transition-colors" />
+                                <div>
+                                    <p className="text-sm font-medium text-foreground">Arrastre sus imágenes o haga clic para buscar</p>
+                                    <p className="text-xs text-foreground/40 mt-1">Soporta JPG, PNG (Max 5MB por archivo)</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

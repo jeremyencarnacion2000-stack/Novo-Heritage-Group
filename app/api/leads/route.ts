@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import cockroachDb from "@/lib/cockroach-db"
+import { sendBrandedEmail, sendClientConfirmationEmail } from "@/lib/mail"
 
 // Ensure leads table exists in CockroachDB
 async function ensureLeadsTable() {
@@ -49,7 +50,25 @@ export async function POST(req: Request) {
       RETURNING *
     `;
 
-    // 2. Forward to Bitrix24 (Disabled if not configured or paid)
+    const lead = data[0];
+
+    await sendBrandedEmail({
+        name: body.name,
+        email: body.email,
+        phone: body.phone || 'No provisto',
+        division: body.division,
+        message: body.message,
+        propertyId: body.propertyId,
+        details: body.details
+    });
+
+    // 2.5 Send Auto-Response to Client if it's a property listing request
+    if (body.source === 'formulario_vender_alquilar' || body.division === 'bienes_raices') {
+        const serviceType = body.details?.Servicio_Solicitado || 'Publicar';
+        await sendClientConfirmationEmail(body.email, body.name, serviceType);
+    }
+
+    // 3. Forward to Bitrix24 (Disabled if not configured or paid)
     const bitrixWebhook = process.env.BITRIX24_WEBHOOK_URL;
     if (bitrixWebhook && !bitrixWebhook.includes('YOUR_BITRIX')) {
       try {
@@ -85,30 +104,32 @@ export async function POST(req: Request) {
       }
     }
 
-    // 3. Forward to N8n Webhook (For lead qualification/notification)
-    const n8nWebhook = process.env.N8N_WEBHOOK_URL || process.env.N8N_LEADS_WEBHOOK;
-    if (n8nWebhook) {
-        try {
-            await fetch(n8nWebhook, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    lead_id: data[0].id,
-                    db: 'cockroach',
-                    timestamp: new Date().toISOString(),
-                    ...body
-                })
-            });
-        } catch (n8nError) {
-            console.error("N8n integration error:", n8nError);
-        }
+    // 4. Forward to N8n Webhook
+    const n8nWebhook = process.env.N8N_WEBHOOK_URL || "https://suskj501-n8n.hf.space/webhook/leads";
+    const n8nApiKey = process.env.N8N_API_KEY;
+    
+    try {
+        await fetch(n8nWebhook, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                ...(n8nApiKey ? { 'Authorization': `Bearer ${n8nApiKey}` } : {})
+            },
+            body: JSON.stringify({
+                lead_id: lead.id,
+                db: 'cockroach',
+                timestamp: new Date().toISOString(),
+                ...body
+            })
+        });
+    } catch (n8nError) {
+        console.error("N8n integration error:", n8nError);
     }
 
-    return NextResponse.json({ ok: true, lead: data[0] }, { status: 201 })
+    return NextResponse.json({ ok: true, lead: lead }, { status: 201 })
   } catch (e) {
     console.error("Leads API error:", e)
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
   }
 }
-
 

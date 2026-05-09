@@ -50,6 +50,10 @@ export function RealEstateQuoteForm({ defaultType = 'residencial' }: { defaultTy
     roiMensual: 0
   })
 
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [contactData, setContactData] = useState({ name: '', email: '', phone: '' })
+  const [submitted, setSubmitted] = useState(false)
+
   // Mock financial projection engine
   useEffect(() => {
     if (quote.tipo && quote.plan && Object.keys(quote.datos).length >= 2) {
@@ -72,6 +76,45 @@ export function RealEstateQuoteForm({ defaultType = 'residencial' }: { defaultTy
       }))
     }
   }, [quote.datos, quote.tipo, quote.plan])
+
+  const handleSubmitLead = async (action: string) => {
+    if (!contactData.name || !contactData.email) {
+      setStep(5); // Go to contact step
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        division: 'bienes_raices',
+        name: contactData.name,
+        email: contactData.email,
+        phone: contactData.phone,
+        message: `Interés en: ${action}. Proyectado: $${quote.roiAnual.toLocaleString()} anual.`,
+        source: 'quote_form',
+        details: {
+          category: quote.tipo,
+          plan: quote.plan,
+          roiAnual: quote.roiAnual,
+          ...quote.datos
+        }
+      };
+
+      const res = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        setSubmitted(true);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   const handleDataChange = (id: string, value: string) => {
     setQuote(prev => {
@@ -234,73 +277,133 @@ export function RealEstateQuoteForm({ defaultType = 'residencial' }: { defaultTy
 
       {/* Step 4: Result */}
       <div className={`transition-all duration-700 relative z-10 ${step === 4 ? 'opacity-100 translate-y-0' : 'hidden'}`}>
-        <div className="text-center mb-12">
-          <Sparkles className="w-8 h-8 text-primary mx-auto mb-6 animate-pulse" />
-          <h3 className="text-4xl font-serif text-foreground mb-4">Proyección <span className="italic text-primary">Novo Heritage</span></h3>
-          <p className="text-xs text-foreground/40 tracking-[0.4em] uppercase">Análisis algorítmico de plusvalía y flujo</p>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-12 max-w-6xl mx-auto">
-          <div className="p-10 border border-primary/20 bg-background/80 shadow-premium relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl group-hover:bg-primary/20 transition-all" />
-            <h4 className="text-xs font-black uppercase tracking-[0.5em] text-primary/60 mb-8 underline decoration-primary/20 underline-offset-8">Estimación de Rendimiento</h4>
-            
-            <div className="space-y-10">
-              <div>
-                <p className="text-xs text-foreground/30 uppercase tracking-widest mb-3">Retorno Anual Proyectado (USD)</p>
-                <div className="flex items-baseline gap-3">
-                  <span className="text-sm font-light text-primary/50">$</span>
-                  <span className="text-6xl font-serif text-primary leading-none">{(quote.roiAnual || 0).toLocaleString()}</span>
-                  <span className="text-xs font-bold text-primary/40 uppercase">Efectivo Anual</span>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-xs text-foreground/30 uppercase tracking-widest mb-3">Flujo de Caja Mensual Estimado</p>
-                <div className="flex items-baseline gap-3">
-                  <span className="text-xs text-foreground/30">$</span>
-                  <span className="text-3xl font-serif text-foreground">{(quote.roiMensual || 0).toLocaleString(undefined, {maximumFractionDigits:0})}</span>
-                  <span className="text-xs font-bold text-foreground/20 uppercase tracking-widest">Ingreso Pasivo</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="h-[1px] bg-primary/10 w-full my-10" />
-            
-            <div className="grid grid-cols-2 gap-4">
-               <div className="p-4 border border-primary/5 bg-white/5 rounded-none">
-                 <p className="text-xs font-black uppercase tracking-widest text-primary mb-1">Plusvalía</p>
-                 <p className="text-xs text-foreground/60">+12.4% Anual</p>
-               </div>
-               <div className="p-4 border border-primary/5 bg-white/5 rounded-none">
-                 <p className="text-xs font-black uppercase tracking-widest text-primary mb-1">Impuestos</p>
-                 <p className="text-xs text-foreground/60">Optimización Fiscal</p>
-               </div>
-            </div>
+        {submitted ? (
+          <div className="text-center p-20 border border-primary/20 bg-primary/5">
+            <Check className="w-16 h-16 text-primary mx-auto mb-6" />
+            <h3 className="text-3xl font-serif text-foreground mb-4">Solicitud Recibida</h3>
+            <p className="text-foreground/60 text-sm tracking-widest uppercase">Un Portfolio Manager se pondrá en contacto con usted en breve.</p>
+            <button onClick={() => setStep(1)} className="mt-10 text-primary border-b border-primary text-xs uppercase tracking-widest">Nueva Consulta</button>
           </div>
+        ) : (
+          <>
+            <div className="text-center mb-12">
+              <Sparkles className="w-8 h-8 text-primary mx-auto mb-6 animate-pulse" />
+              <h3 className="text-4xl font-serif text-foreground mb-4">Proyección <span className="italic text-primary">Novo Heritage</span></h3>
+              <p className="text-xs text-foreground/40 tracking-[0.4em] uppercase">Análisis algorítmico de plusvalía y flujo</p>
+            </div>
 
-          <div className="flex flex-col gap-4">
-            {[
-              { label: 'Solicitar Dosier de Inversión', icon: Download },
-              { label: 'Agendar Tour de Propiedades VIP', icon: Plane },
-              { label: 'Videollamada con Portfolio Manager', icon: Mail },
-              { label: 'Estructuración de Fideicomiso', icon: Shield },
-            ].map((btn, i) => (
-              <button key={i} className="flex items-center justify-between p-6 border border-primary/10 bg-background/50 hover:bg-primary/5 hover:border-primary/40 transition-all group rounded-none">
-                <span className="text-xs font-black uppercase tracking-[0.3em] text-foreground/70 group-hover:text-primary">{btn.label}</span>
-                <btn.icon className="w-4 h-4 text-primary group-hover:scale-125 transition-transform" />
+            <div className="grid md:grid-cols-2 gap-12 max-w-6xl mx-auto">
+              <div className="p-10 border border-primary/20 bg-background/80 shadow-premium relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl group-hover:bg-primary/20 transition-all" />
+                <h4 className="text-xs font-black uppercase tracking-[0.5em] text-primary/60 mb-8 underline decoration-primary/20 underline-offset-8">Estimación de Rendimiento</h4>
+                
+                <div className="space-y-10">
+                  <div>
+                    <p className="text-xs text-foreground/30 uppercase tracking-widest mb-3">Retorno Anual Proyectado (USD)</p>
+                    <div className="flex items-baseline gap-3">
+                      <span className="text-sm font-light text-primary/50">$</span>
+                      <span className="text-6xl font-serif text-primary leading-none">{(quote.roiAnual || 0).toLocaleString()}</span>
+                      <span className="text-xs font-bold text-primary/40 uppercase">Efectivo Anual</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-foreground/30 uppercase tracking-widest mb-3">Flujo de Caja Mensual Estimado</p>
+                    <div className="flex items-baseline gap-3">
+                      <span className="text-xs text-foreground/30">$</span>
+                      <span className="text-3xl font-serif text-foreground">{(quote.roiMensual || 0).toLocaleString(undefined, {maximumFractionDigits:0})}</span>
+                      <span className="text-xs font-bold text-foreground/20 uppercase tracking-widest">Ingreso Pasivo</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="h-[1px] bg-primary/10 w-full my-10" />
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 border border-primary/5 bg-white/5 rounded-none">
+                    <p className="text-xs font-black uppercase tracking-widest text-primary mb-1">Plusvalía</p>
+                    <p className="text-xs text-foreground/60">+12.4% Anual</p>
+                  </div>
+                  <div className="p-4 border border-primary/5 bg-white/5 rounded-none">
+                    <p className="text-xs font-black uppercase tracking-widest text-primary mb-1">Impuestos</p>
+                    <p className="text-xs text-foreground/60">Optimización Fiscal</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                {[
+                  { label: 'Solicitar Dosier de Inversión', icon: Download },
+                  { label: 'Agendar Tour de Propiedades VIP', icon: Plane },
+                  { label: 'Videollamada con Portfolio Manager', icon: Mail },
+                  { label: 'Estructuración de Fideicomiso', icon: Shield },
+                ].map((btn, i) => (
+                  <button 
+                    key={i} 
+                    onClick={() => handleSubmitLead(btn.label)}
+                    className="flex items-center justify-between p-6 border border-primary/10 bg-background/50 hover:bg-primary/5 hover:border-primary/40 transition-all group rounded-none"
+                  >
+                    <span className="text-xs font-black uppercase tracking-[0.3em] text-foreground/70 group-hover:text-primary">{btn.label}</span>
+                    <btn.icon className="w-4 h-4 text-primary group-hover:scale-125 transition-transform" />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-16 flex justify-center">
+              <button 
+                onClick={() => setStep(1)}
+                className="flex items-center gap-4 px-12 py-5 border border-primary/20 text-foreground/30 hover:text-primary hover:border-primary transition-all text-xs font-black uppercase tracking-[0.4em] rounded-none"
+              >
+                <ArrowLeft className="w-4 h-4" /> Recalcular Escenario Patrimonial
               </button>
-            ))}
-          </div>
-        </div>
+            </div>
+          </>
+        )}
+      </div>
 
-        <div className="mt-16 flex justify-center">
-          <button 
-            onClick={() => setStep(1)}
-            className="flex items-center gap-4 px-12 py-5 border border-primary/20 text-foreground/30 hover:text-primary hover:border-primary transition-all text-xs font-black uppercase tracking-[0.4em] rounded-none"
-          >
-            <ArrowLeft className="w-4 h-4" /> Recalcular Escenario Patrimonial
-          </button>
+      {/* Step 5: Final Contact Details */}
+      <div className={`transition-all duration-700 relative z-10 ${step === 5 ? 'opacity-100 translate-y-0' : 'hidden'}`}>
+        <div className="max-w-xl mx-auto bg-background p-12 border border-primary/20 shadow-premium">
+          <h3 className="text-2xl font-serif text-foreground mb-8 text-center">Confirmar Identidad <span className="italic text-primary">Patrimonial</span></h3>
+          <div className="space-y-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] uppercase tracking-widest text-foreground/40 font-bold">Nombre Completo</label>
+              <input 
+                type="text" 
+                className="w-full bg-transparent border-b border-foreground/10 py-3 focus:border-primary outline-none transition-all"
+                value={contactData.name}
+                onChange={(e) => setContactData({...contactData, name: e.target.value})}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] uppercase tracking-widest text-foreground/40 font-bold">Email Corporativo / Privado</label>
+              <input 
+                type="email" 
+                className="w-full bg-transparent border-b border-foreground/10 py-3 focus:border-primary outline-none transition-all"
+                value={contactData.email}
+                onChange={(e) => setContactData({...contactData, email: e.target.value})}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] uppercase tracking-widest text-foreground/40 font-bold">Teléfono de Contacto</label>
+              <input 
+                type="text" 
+                className="w-full bg-transparent border-b border-foreground/10 py-3 focus:border-primary outline-none transition-all"
+                value={contactData.phone}
+                onChange={(e) => setContactData({...contactData, phone: e.target.value})}
+              />
+            </div>
+            
+            <button 
+              disabled={isSubmitting || !contactData.name || !contactData.email}
+              onClick={() => handleSubmitLead('Lead desde Cotizador')}
+              className="w-full btn-premium py-6 mt-10"
+            >
+              {isSubmitting ? 'Procesando...' : 'Finalizar Gestión'}
+            </button>
+            <button onClick={() => setStep(4)} className="w-full text-[10px] uppercase tracking-widest text-foreground/30 mt-4">Volver a Proyección</button>
+          </div>
         </div>
       </div>
     </div>

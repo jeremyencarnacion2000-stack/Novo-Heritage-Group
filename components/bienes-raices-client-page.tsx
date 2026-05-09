@@ -309,7 +309,7 @@ export default function BienesRaicesClientPage({ properties: initialProperties }
             <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-transparent to-background" />
           </div>
 
-          <div className="container layout-guide-visual relative z-10 text-center max-w-7xl mx-auto pt-20">
+          <div className="container layout-guide-visual relative z-10 text-center max-w-7xl mx-auto pt-fixed-header">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
