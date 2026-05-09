@@ -87,6 +87,9 @@ export default {
         "float": "float 3s ease-in-out infinite",
         "pulse-slow": "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
       },
+      transitionTimingFunction: {
+        "premium": "cubic-bezier(0.19, 1, 0.22, 1)",
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 // @ts-ignore
-import { Home, Key, MapPin, Camera, Building2, User, Phone, Mail, Check, UploadCloud } from "lucide-react"
+import { Home, Key, MapPin, Camera, Building2, User, Phone, Mail, Check, UploadCloud, X } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils"
 
 export function PropertySellForm() {
     const [isLoading, setIsLoading] = useState(false)
+    const [photos, setPhotos] = useState<{name: string, base64: string}[]>([])
     const [formData, setFormData] = useState({
         name: "",
         email: "",
@@ -27,6 +28,29 @@ export function PropertySellForm() {
 
     const handleInputChange = (field: string, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }))
+    }
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files) return;
+
+        Array.from(files).forEach(file => {
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error(`El archivo ${file.name} es demasiado grande.`);
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPhotos(prev => [...prev, {
+                    name: file.name,
+                    base64: reader.result as string
+                }]);
+            };
+            reader.readAsDataURL(file);
+        });
+        
+        toast.success(`${files.length} imágenes cargadas.`);
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -44,15 +68,16 @@ export function PropertySellForm() {
                 name: formData.name,
                 email: formData.email,
                 phone: formData.phone,
-                message: "Solicitud de Captación de Propiedad",
+                message: "Solicitud de Captación de Propiedad con Fotos",
                 source: "formulario_vender_alquilar",
                 details: {
                     Servicio_Solicitado: formData.serviceType,
                     Tipo_Propiedad: formData.propertyType,
                     Direccion: formData.address,
                     Caracteristicas: formData.features,
-                    Precio_Esperado: formData.price
-                }
+                    Precio_Esperado: formData.price,
+                },
+                photos: photos // Include the base64 photos
             }
 
             const res = await fetch("/api/leads", {
@@ -70,6 +95,7 @@ export function PropertySellForm() {
             setFormData({
                 name: "", email: "", phone: "", serviceType: "", propertyType: "", address: "", features: "", price: ""
             })
+            setPhotos([])
         } catch (error) {
             toast.error("Error al procesar", {
                 description: "Inténtelo de nuevo más tarde."
@@ -207,13 +233,7 @@ export function PropertySellForm() {
                                 multiple 
                                 accept="image/*"
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                onChange={(e) => {
-                                    // Simulation of file handling
-                                    const files = e.target.files;
-                                    if (files && files.length > 0) {
-                                        toast.success(`${files.length} imágenes seleccionadas para revisión.`);
-                                    }
-                                }}
+                                onChange={handleFileChange}
                             />
                             <div className="flex flex-col items-center gap-3">
                                 <UploadCloud className="w-10 h-10 text-primary/40 group-hover:text-primary transition-colors" />
@@ -223,6 +243,28 @@ export function PropertySellForm() {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Preview Grid */}
+                        {photos.length > 0 && (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
+                                {photos.map((photo, index) => (
+                                    <div key={index} className="relative aspect-square border border-primary/20 group">
+                                        <img 
+                                            src={photo.base64} 
+                                            alt="Preview" 
+                                            className="w-full h-full object-cover"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setPhotos(prev => prev.filter((_, i) => i !== index))}
+                                            className="absolute top-1 right-1 bg-black/60 text-white p-1 hover:bg-red-500 transition-colors"
+                                        >
+                                            <X className="w-3 h-3" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
 

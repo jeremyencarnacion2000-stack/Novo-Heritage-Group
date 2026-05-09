@@ -38,7 +38,7 @@ export function Header({ isScrolled, onMenuClick, isIntroFinished = true }: Head
 
   return (
     <header
-      className={`fixed top-8 left-0 right-0 z-[100] mx-auto hidden md:flex items-center justify-between transition-all duration-1000 ease-[cubic-bezier(0.19,1,0.22,1)] ${
+      className={`fixed top-8 left-0 right-0 z-[100] mx-auto hidden md:flex items-center justify-between transition-all duration-1000 ease-premium ${
         isScrolled 
         ? "max-w-[1400px] w-[calc(100%-4rem)] px-10 py-4 bg-white/5 backdrop-blur-md border border-white/20 shadow-premium rounded-none" 
         : "max-w-7xl w-full px-12 py-6 bg-transparent"

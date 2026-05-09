@@ -55,6 +55,7 @@ const ParallaxCard = ({ children, image, title, className, onClick, overlayOpaci
           src={image}
           alt={title}
           fill
+          sizes="100vw"
           className="object-cover transition-transform duration-1000 group-hover:scale-110"
         />
       </motion.div>
@@ -236,7 +237,7 @@ export default function BienesRaicesClientPage({ properties: initialProperties }
                             className="group cursor-pointer flex gap-10 items-center pb-12 border-b border-white/5 hover:border-primary/30 transition-all duration-700"
                           >
                             <div className="relative w-32 h-32 overflow-hidden border border-white/10 bg-black/40 shadow-premium shrink-0">
-                              <Image src={item.image || "/placeholder.jpg"} alt={item.title} fill className="object-cover scale-110 group-hover:scale-100 grayscale-[0.5] group-hover:grayscale-0 transition-all duration-1000" />
+                              <Image src={item.image || "/luxury_modern_villa_renaissance.png"} alt={item.title} fill sizes="128px" className="object-cover scale-110 group-hover:scale-100 grayscale-[0.5] group-hover:grayscale-0 transition-all duration-1000" />
                             </div>
                             <div className="flex-1 space-y-3">
                               <h4 className="text-2xl md:text-3xl font-serif text-white mb-1 line-clamp-1 group-hover:text-primary transition-colors">{item.title}</h4>
@@ -289,6 +290,7 @@ export default function BienesRaicesClientPage({ properties: initialProperties }
               src="/Realty.svg"
               alt=""
               fill
+              sizes="100vw"
               className="object-contain scale-150 rotate-[-15deg]"
             />
           </div>
@@ -302,6 +304,7 @@ export default function BienesRaicesClientPage({ properties: initialProperties }
                 src="/premium-luxury-villa-real-estate-hero.png"
                 alt="Luxury Real Estate"
                 fill
+                sizes="100vw"
                 className="object-cover brightness-[0.5]"
                 priority
               />

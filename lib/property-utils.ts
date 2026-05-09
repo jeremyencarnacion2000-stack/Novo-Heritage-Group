@@ -19,7 +19,7 @@ export function mapCockroachProperty(p: any) {
         }
     } catch { /* ignore */ }
 
-    const primaryImage = images[0] || "/luxury-modern-villa-renaissance.png";
+    const primaryImage = images[0] || "/luxury_modern_villa_renaissance.png";
 
     return {
         id: String(p.id),
