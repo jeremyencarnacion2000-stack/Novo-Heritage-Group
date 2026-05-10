@@ -50,7 +50,7 @@ const vehiclePlans = [
     title: "Plan Básico (Ley)",
     description: "La cobertura mínima exigida por ley para transitar con seguridad.",
     features: ["Responsabilidad Civil", "Fianza Judicial", "Lesiones o Muerte a Terceros", "Daños a la Propiedad Ajena"],
-    price: "Desde RD$ 4,500",
+    price: "Desde RD$ 2,500",
     recommended: false
   },
   {

@@ -12,6 +12,9 @@ interface QuoteData {
   datos: Record<string, string | number>
   totalAnual: number
   totalMensual: number
+  name?: string
+  email?: string
+  phone?: string
 }
 
 const PLAN_TIERS = [
@@ -58,8 +61,12 @@ export function InsuranceQuoteForm({ defaultType = 'auto' }: { defaultType?: Ins
     plan: null,
     datos: {},
     totalAnual: 0,
-    totalMensual: 0
+    totalMensual: 0,
+    name: "",
+    email: "",
+    phone: ""
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleDataChange = (id: string, value: string) => {
     setQuote(prev => {
@@ -80,6 +87,47 @@ export function InsuranceQuoteForm({ defaultType = 'auto' }: { defaultType?: Ins
       
       return { ...prev, datos: newDatos };
     });
+  }
+
+  const handleSubmitLead = async () => {
+    if (!quote.name || !quote.email || !quote.phone) {
+      alert("Por favor completa tus datos de contacto")
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      const payload = {
+        division: "seguros",
+        name: quote.name,
+        email: quote.email,
+        phone: quote.phone,
+        message: `Cotización de Seguro: ${quote.tipo} - Plan ${quote.plan}. Inversión: $${quote.totalAnual.toLocaleString()} anual.`,
+        source: "cotizador_seguros_premium",
+        details: {
+          ...quote.datos,
+          tipo: quote.tipo,
+          plan: quote.plan,
+          total_anual: quote.totalAnual,
+          total_mensual: quote.totalMensual
+        }
+      }
+
+      const res = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+
+      if (!res.ok) throw new Error("API Error")
+      
+      setStep(6) // Success
+    } catch (err) {
+      console.error("Submission error:", err)
+      alert("Error al enviar la solicitud. Por favor intenta de nuevo.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   // Auto-calculate dummy pricing for the Premium vibe
@@ -169,6 +217,8 @@ export function InsuranceQuoteForm({ defaultType = 'auto' }: { defaultType?: Ins
         {renderStepIcon(3, 'Perfil')}
         <div className={`w-6 md:w-12 h-[1px] ${step > 3 ? 'bg-primary' : 'bg-foreground/10'} transition-colors duration-500`} />
         {renderStepIcon(4, 'Propuesta')}
+        <div className={`w-6 md:w-12 h-[1px] ${step > 4 ? 'bg-primary' : 'bg-foreground/10'} transition-colors duration-500`} />
+        {renderStepIcon(5, 'Cierre')}
       </div>
 
       {/* Step 1: Type Selection */}
@@ -285,8 +335,11 @@ export function InsuranceQuoteForm({ defaultType = 'auto' }: { defaultType?: Ins
           </div>
 
           <div className="flex flex-col gap-4 justify-center">
-            <button className="flex items-center justify-between p-4 border border-primary/20 glass-architectural hover:bg-primary/5 transition-colors group rounded-none">
-              <span className="text-xs uppercase tracking-widest font-bold">Solicitar Asesor</span>
+            <button 
+              onClick={() => setStep(5)}
+              className="flex items-center justify-between p-4 border border-primary/20 glass-architectural hover:bg-primary/5 transition-colors group rounded-none"
+            >
+              <span className="text-xs uppercase tracking-widest font-bold">Solicitar Asesor Directo</span>
               <Target className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
             </button>
             <button className="flex items-center justify-between p-4 border border-primary/20 glass-architectural hover:bg-primary/5 transition-colors group rounded-none">
@@ -309,6 +362,73 @@ export function InsuranceQuoteForm({ defaultType = 'auto' }: { defaultType?: Ins
           </button>
         </div>
       </div>
+
+      {/* Step 5: Contact */}
+      <div className={`transition-all duration-700 relative z-10 ${step === 5 ? 'opacity-100 translate-x-0' : 'hidden translate-x-10'}`}>
+        <div className="max-w-2xl mx-auto space-y-8 bg-background/80 p-10 border border-primary/10 shadow-premium">
+            <div className="text-center mb-10">
+               <Shield className="w-10 h-10 text-primary mx-auto mb-4" />
+               <h3 className="text-2xl font-serif">Confirmación de Interés</h3>
+               <p className="text-foreground/40 text-xs uppercase tracking-widest mt-2">Seguridad y Confidencialidad Novo Heritage</p>
+            </div>
+            <div className="space-y-6">
+               <div className="space-y-3">
+                  <label className="text-[10px] uppercase tracking-widest font-black text-primary/60">Nombre Completo</label>
+                  <input 
+                    type="text" 
+                    className="w-full bg-background/50 border border-primary/10 p-5 text-xs focus:border-primary outline-none" 
+                    placeholder="Ej. Juan Pérez"
+                    value={quote.name}
+                    onChange={(e) => setQuote(prev => ({...prev, name: e.target.value}))}
+                  />
+               </div>
+               <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                     <label className="text-[10px] uppercase tracking-widest font-black text-primary/60">Email Patrimonial</label>
+                     <input 
+                        type="email" 
+                        className="w-full bg-background/50 border border-primary/10 p-5 text-xs focus:border-primary outline-none" 
+                        placeholder="juan@ejemplo.com"
+                        value={quote.email}
+                        onChange={(e) => setQuote(prev => ({...prev, email: e.target.value}))}
+                     />
+                  </div>
+                  <div className="space-y-3">
+                     <label className="text-[10px] uppercase tracking-widest font-black text-primary/60">Teléfono / WhatsApp</label>
+                     <input 
+                        type="tel" 
+                        className="w-full bg-background/50 border border-primary/10 p-5 text-xs focus:border-primary outline-none" 
+                        placeholder="+1 809..."
+                        value={quote.phone}
+                        onChange={(e) => setQuote(prev => ({...prev, phone: e.target.value}))}
+                     />
+                  </div>
+               </div>
+            </div>
+            <button 
+               onClick={handleSubmitLead} 
+               disabled={isSubmitting}
+               className="w-full mt-10 py-6 bg-primary text-black font-black uppercase tracking-[0.4em] text-xs hover:shadow-[0_0_30px_rgba(230,193,90,0.4)] transition-all flex items-center justify-center gap-4"
+            >
+               {isSubmitting ? 'Procesando...' : 'Asesorar mi Patrimonio'} <ArrowRight className="w-4 h-4" />
+            </button>
+            <button onClick={() => setStep(4)} className="w-full text-[10px] uppercase tracking-widest text-foreground/40 mt-4 hover:text-primary transition-colors">Volver a la Propuesta</button>
+        </div>
+      </div>
+
+      {/* Step 6: Success */}
+      {step === 6 && (
+        <div className="flex flex-col items-center justify-center text-center p-20 animate-fade-in relative z-20">
+           <div className="w-24 h-24 bg-primary/10 flex items-center justify-center mb-10 border border-primary/20">
+              <Check className="w-12 h-12 text-primary" />
+           </div>
+           <h3 className="text-4xl font-serif text-primary mb-6">Propuesta en Proceso</h3>
+           <p className="text-foreground/50 max-w-lg mx-auto font-light leading-relaxed">
+              Su solicitud ha sido enviada a nuestro departamento de riesgos. Un especialista de Novo Heritage se pondrá en contacto con usted en breve para formalizar su póliza.
+           </p>
+           <button onClick={() => setStep(1)} className="mt-12 text-xs font-bold uppercase tracking-widest text-primary hover:underline border-b border-primary/20 pb-1">Realizar otra consulta</button>
+        </div>
+      )}
     </div>
   )
 }

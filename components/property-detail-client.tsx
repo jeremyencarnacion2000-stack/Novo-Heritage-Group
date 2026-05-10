@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { RealEstateQuoteForm } from "@/components/forms/real-estate-quote-form"
+import { PaymentCalculator } from "@/components/payment-calculator"
 
 interface PropertyDetailClientProps {
     propertyId: string
@@ -26,6 +27,7 @@ export function PropertyDetailClient({ propertyId, initialProperty }: PropertyDe
     const [isScrolled, setIsScrolled] = useState(false)
     const [activeImage, setActiveImage] = useState(0)
     const [isLiked, setIsLiked] = useState(false)
+    const [relatedProperties, setRelatedProperties] = useState<any[]>([])
 
     useEffect(() => {
         const handleScroll = () => setIsScrolled(window.scrollY > 50)
@@ -50,6 +52,13 @@ export function PropertyDetailClient({ propertyId, initialProperty }: PropertyDe
             if(initialProperty && favs.includes(initialProperty.id)) {
                 setIsLiked(true)
             }
+            
+            fetch(`/api/properties`)
+                .then(res => res.json())
+                .then(data => {
+                    setRelatedProperties(data.filter((p: any) => p.id !== propertyId).slice(0, 3))
+                })
+                .catch(() => {})
         }
 
         return () => window.removeEventListener("scroll", handleScroll)
@@ -233,7 +242,7 @@ export function PropertyDetailClient({ propertyId, initialProperty }: PropertyDe
 
                             <div className="flex flex-col sm:flex-row gap-4 pt-6">
                                 <Button 
-                                    onClick={() => window.open(`https://wa.me/18492200224?text=Hola,%20estoy%20interesado%20en%20recibir%20m%C3%A1s%20detalles%20sobre%20la%20propiedad%20${encodeURIComponent(property.title)}%20(${property.reference || property.id}).`, '_blank')}
+                                    onClick={() => window.open(`https://wa.me/18092157540?text=Hola,%20estoy%20interesado%20en%20recibir%20m%C3%A1s%20detalles%20sobre%20la%20propiedad%20${encodeURIComponent(property.title)}%20(${property.reference || property.id}).`, '_blank')}
                                     className="flex-1 h-14 bg-primary text-black hover:scale-[1.02] shadow-premium transition-all rounded-none font-bold text-[10px] tracking-[0.3em] uppercase"
                                 >
                                     Contactar Agente
@@ -254,10 +263,49 @@ export function PropertyDetailClient({ propertyId, initialProperty }: PropertyDe
                                     </DialogContent>
                                 </Dialog>
                             </div>
-                        </div>
                     </div>
                 </div>
-            </main>
+
+                {/* Payment Calculator Section */}
+                <div className="mt-24">
+                    <PaymentCalculator propertyPrice={property.price} />
+                </div>
+
+                {/* Related Properties Section */}
+                {relatedProperties.length > 0 && (
+                    <div className="mt-32 space-y-12">
+                        <div className="flex flex-col md:flex-row justify-between items-end gap-6">
+                            <div>
+                                <h2 className="text-4xl font-serif font-light mb-4 text-foreground">Propiedades <span className="italic text-primary">Relacionadas</span></h2>
+                                <p className="text-[11px] uppercase tracking-[0.4em] text-foreground/40 font-black">Explora otras opciones exclusivas en nuestra colección</p>
+                            </div>
+                            <Link href="/bienes-raices/coleccion" className="text-[10px] uppercase tracking-[0.4em] font-black text-primary border-b border-primary/20 pb-2 hover:border-primary transition-all">Ver Toda la Colección</Link>
+                        </div>
+
+                        <div className="grid md:grid-cols-3 gap-8">
+                            {relatedProperties.map((rel: any) => (
+                                <Link key={rel.id} href={`/bienes-raices/propiedad/${rel.id}`} className="group block">
+                                    <div className="relative aspect-[4/5] overflow-hidden border border-primary/10 mb-6 font-sans">
+                                        <Image 
+                                            src={rel.images?.[0] || rel.image || "/placeholder.jpg"} 
+                                            alt={rel.title} 
+                                            fill 
+                                            className="object-cover transition-transform duration-1000 group-hover:scale-110 grayscale-[30%] group-hover:grayscale-0"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-60" />
+                                        <div className="absolute bottom-6 left-6 right-6">
+                                            <Badge className="bg-primary text-black rounded-none mb-3 font-bold text-[9px] uppercase tracking-widest">{rel.type}</Badge>
+                                            <div className="text-xl font-serif text-white mb-1">{rel.title}</div>
+                                            <div className="text-primary text-sm font-light">$ {rel.price.toLocaleString()}</div>
+                                        </div>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+        </main>
 
             <Footer />
         </div>
